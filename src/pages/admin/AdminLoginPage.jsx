@@ -28,11 +28,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleFillDemo = () => {
-    setEmail('admin@ubanharkalla.com');
-    setPassword('admin123');
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -129,18 +124,7 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Instant Admin Demo Login Fill */}
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              className="text-xs font-semibold text-emerald-400 hover:underline"
-            >
-              Auto-fill Pre-configured Admin Credentials
-            </button>
-          </div>
-
-          <div className="mt-4 text-center text-xs text-slate-500">
+          <div className="mt-6 text-center text-xs text-slate-500">
             <Link to="/" className="hover:text-slate-400">
               ← Return to Public Storefront
             </Link>

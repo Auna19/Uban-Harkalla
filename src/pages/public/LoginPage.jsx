@@ -38,11 +38,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickDemo = (demoEmail, demoPass) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -154,29 +149,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Login Fillers for Evaluation */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Instant Demo Fill
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('customer@ubanharkalla.com', 'customer123')}
-                className="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors"
-              >
-                Customer Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('admin@ubanharkalla.com', 'admin123')}
-                className="px-3 py-1.5 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded-lg transition-colors"
-              >
-                Admin Demo
-              </button>
-            </div>
-          </div>
 
           <div className="mt-6 text-center text-xs text-slate-500">
             Don't have an account yet?{' '}
