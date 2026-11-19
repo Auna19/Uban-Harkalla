@@ -152,54 +152,62 @@ export default function ProductCard({ product }) {
             )}
           </div>
 
-          {/* Price & Action Buttons */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+          {/* Price */}
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-baseline justify-between gap-2">
             <div>
-              <div className="text-base sm:text-lg font-black text-slate-950">
+              <div className="text-base sm:text-lg font-black text-slate-950 tracking-tight">
                 ₦{currentPrice?.toLocaleString()}
               </div>
               {hasDiscount && (
-                <div className="text-xs text-slate-400 line-through -mt-0.5">
+                <div className="text-xs text-slate-400 line-through -mt-0.5 font-medium">
                   ₦{originalPrice?.toLocaleString()}
                 </div>
               )}
             </div>
+            {hasDiscount && (
+              <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0">
+                -₦{(originalPrice - currentPrice).toLocaleString()}
+              </span>
+            )}
+          </div>
 
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={handleOpenQuickView}
-                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors flex items-center gap-1"
-                title="Quick View & Options"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Options</span>
-              </button>
+          {/* Action Buttons Row */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleOpenQuickView}
+              className="w-full py-2.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border border-slate-200/70 shadow-2xs"
+              title="Select Storage, Color & Condition"
+            >
+              <Eye className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+              <span className="font-extrabold whitespace-nowrap">Options</span>
+            </button>
 
-              <button
-                onClick={handleQuickAdd}
-                disabled={isOutOfStock}
-                className={`p-2 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                  justAdded
-                    ? 'bg-emerald-700 text-white shadow-sm'
-                    : isOutOfStock
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-md active:scale-95'
-                }`}
-                title="Add to Cart"
-              >
-                {justAdded ? (
-                  <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Added!</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Add</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleQuickAdd}
+              disabled={isOutOfStock}
+              className={`w-full py-2.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 ${
+                justAdded
+                  ? 'bg-emerald-700 text-white shadow-emerald-700/20'
+                  : isOutOfStock
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 hover:shadow-md'
+              }`}
+              title={isOutOfStock ? 'Currently Out of Stock' : 'Add to Cart'}
+            >
+              {justAdded ? (
+                <>
+                  <Check className="w-3.5 h-3.5 shrink-0" />
+                  <span className="font-extrabold whitespace-nowrap">Added!</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+                  <span className="font-extrabold whitespace-nowrap">{isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </TiltCard>

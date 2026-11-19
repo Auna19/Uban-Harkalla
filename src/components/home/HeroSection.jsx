@@ -117,10 +117,10 @@ export default function HeroSection({ content }) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
+
           {/* Left Column: Headlines & CTA */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            
+
             {/* Top Brand Tag with Subtle Glow */}
             <ScrollReveal direction="down" duration={500}>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold tracking-wider uppercase shadow-lg shadow-emerald-500/5">
@@ -229,7 +229,7 @@ export default function HeroSection({ content }) {
           <div className="lg:col-span-5 relative">
             <ScrollReveal direction="zoom" delay={200} duration={700}>
               <div className="relative mx-auto max-w-md lg:max-w-none">
-                
+
                 {/* Ambient dynamic back-glow behind device card */}
                 <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-amber-500/20 rounded-3xl blur-2xl opacity-75 animate-pulse-glow" />
 
@@ -252,9 +252,8 @@ export default function HeroSection({ content }) {
                           <img
                             src={slide.image}
                             alt={slide.model}
-                            className={`w-full h-full object-cover object-center transition-transform duration-1000 ${
-                              currentSlide === idx ? 'scale-105' : 'scale-100'
-                            }`}
+                            className={`w-full h-full object-cover object-center transition-transform duration-1000 ${currentSlide === idx ? 'scale-105' : 'scale-100'
+                              }`}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
                         </div>
@@ -290,16 +289,15 @@ export default function HeroSection({ content }) {
                             setCurrentSlide(idx);
                           }}
                           aria-label={`Go to slide ${idx + 1}`}
-                          className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                            currentSlide === idx
-                              ? 'w-5 bg-emerald-400'
-                              : 'w-1.5 bg-slate-600 hover:bg-slate-400'
-                          }`}
+                          className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${currentSlide === idx
+                            ? 'w-5 bg-emerald-400'
+                            : 'w-1.5 bg-slate-600 hover:bg-slate-400'
+                            }`}
                         />
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* Floating Overlay Card on Image */}
                   <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-slate-700/80 flex items-center justify-between shadow-xl z-20">
                     <div className="min-w-0 pr-3">
