@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getProductBySlug, getProducts } from '../../services/dataService';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/common/ProductCard';
+import ScrollReveal from '../../components/common/ScrollReveal';
+import TiltCard from '../../components/common/TiltCard';
 import {
   ShoppingBag,
   ShieldCheck,
@@ -13,6 +15,9 @@ import {
   Share2,
   AlertCircle,
   Sparkles,
+  Zap,
+  Check,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -31,6 +36,7 @@ export default function ProductDetailPage() {
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [addedSuccess, setAddedSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'specs'
 
   useEffect(() => {
     async function loadProduct() {
@@ -133,7 +139,6 @@ export default function ProductDetailPage() {
     if (exact) {
       setSelectedAttributes(candidate);
     } else {
-      // Find a variation that contains this attribute value and has the closest match
       const matching = product.variations.filter(
         (v) => v.attributes && v.attributes[attrKey] === val
       );
@@ -171,7 +176,10 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading Device Details...</p>
+        </div>
       </div>
     );
   }
@@ -195,51 +203,71 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
+    <div className="min-h-screen bg-slate-50/70 py-8 pb-24 md:pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Back Link */}
-        <div className="mb-6">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-emerald-600 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-700 transition-colors group cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to previous page
+            <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-2xs group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-colors">
+              <ArrowLeft className="w-3.5 h-3.5" />
+            </div>
+            <span>Back to previous page</span>
           </button>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500">
+            <Link to="/" className="hover:text-emerald-600">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <Link to="/shop" className="hover:text-emerald-600">Shop</Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-semibold text-slate-800 line-clamp-1">{product.name}</span>
+          </div>
         </div>
 
         {/* Product Details Main Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 sm:p-10 mb-16">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10 mb-14">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
             
             {/* Left: Image Gallery */}
             <div className="lg:col-span-6 space-y-4">
-              <div className="relative aspect-square sm:aspect-4/3 rounded-2xl overflow-hidden bg-slate-50 border border-slate-200">
-                <img
-                  src={activeImage}
-                  alt={product.name}
-                  className="w-full h-full object-cover object-center"
-                />
-                {product.is_featured && (
-                  <span className="absolute top-4 left-4 px-3 py-1 bg-amber-500 text-white text-xs font-bold uppercase rounded-full shadow">
-                    Featured Item
-                  </span>
-                )}
-              </div>
+              <TiltCard maxTilt={5} glare={true} className="rounded-3xl shadow-sm">
+                <div className="relative aspect-square rounded-3xl overflow-hidden bg-gradient-to-b from-slate-100/60 to-slate-50 border border-slate-200/80 group">
+                  <img
+                    src={activeImage}
+                    alt={product.name}
+                    className="w-full h-full object-contain p-6 transition-transform duration-500 ease-out group-hover:scale-105"
+                  />
+                  {product.is_featured && (
+                    <span className="absolute top-4 left-4 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[11px] font-black uppercase tracking-wider rounded-full shadow-md flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 fill-white" />
+                      Featured Item
+                    </span>
+                  )}
+                  {originalPrice > currentPrice && (
+                    <span className="absolute top-4 right-4 px-3.5 py-1.5 bg-rose-600 text-white text-[11px] font-black uppercase tracking-wider rounded-full shadow-md">
+                      Save ₦{(originalPrice - currentPrice).toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </TiltCard>
 
               {/* Thumbnails */}
               {product.images && product.images.length > 1 && (
-                <div className="flex items-center gap-3 overflow-x-auto pb-2">
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
                   {product.images.map((img, idx) => (
                     <button
                       key={idx}
                       onClick={() => setActiveImage(img)}
-                      className={`w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                        activeImage === img ? 'border-emerald-600 shadow-md scale-105' : 'border-slate-200 hover:border-slate-300'
+                      className={`w-18 h-18 rounded-2xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer p-1 bg-white ${
+                        activeImage === img
+                          ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/20 scale-105'
+                          : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={img} alt="" className="w-full h-full object-contain rounded-xl" />
                     </button>
                   ))}
                 </div>
@@ -251,34 +279,36 @@ export default function ProductDetailPage() {
               
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold uppercase">
+                  <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-black uppercase tracking-wider border border-emerald-200/60">
                     {product.brand_name}
                   </span>
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-slate-500 font-semibold">
                     {product.category_name}
                   </span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight leading-tight">
                   {product.name}
                 </h1>
                 {matchedVariation?.sku && (
-                  <p className="text-xs text-slate-400 font-mono mt-1">
-                    SKU: {matchedVariation.sku}
+                  <p className="text-xs text-slate-400 font-mono mt-1.5 flex items-center gap-2">
+                    <span>SKU: {matchedVariation.sku}</span>
+                    <span>•</span>
+                    <span className="text-emerald-700 font-semibold">100% Genuine Certified</span>
                   </p>
                 )}
               </div>
 
               {/* Pricing Display */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-baseline gap-3">
-                <span className="text-3xl font-black text-slate-950">
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-50 via-emerald-50/20 to-slate-50 border border-slate-200/80 flex items-baseline gap-3 flex-wrap">
+                <span className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
                   ₦{currentPrice.toLocaleString()}
                 </span>
                 {originalPrice > currentPrice && (
                   <>
-                    <span className="text-sm text-slate-400 line-through">
+                    <span className="text-base text-slate-400 line-through font-semibold">
                       ₦{originalPrice.toLocaleString()}
                     </span>
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-black text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                       Save ₦{(originalPrice - currentPrice).toLocaleString()}
                     </span>
                   </>
@@ -286,37 +316,40 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Short Description */}
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed font-normal">
                 {product.short_description}
               </p>
 
               {/* Dynamic Variation Pickers (Storage, Color, Condition, etc.) */}
               {Object.keys(availableAttributeOptions).length > 0 && (
-                <div className="space-y-4 pt-2 border-t border-slate-100">
+                <div className="space-y-4 pt-3 border-t border-slate-100">
                   {Object.entries(availableAttributeOptions).map(([attrKey, values]) => {
                     const currentSelected = selectedAttributes[attrKey];
                     return (
                       <div key={attrKey}>
                         <div className="flex items-center justify-between text-xs mb-2">
-                          <span className="font-bold text-slate-700 uppercase tracking-wider">
-                            Select {attrKey}:
+                          <span className="font-extrabold text-slate-700 uppercase tracking-wider">
+                            {attrKey}:
                           </span>
-                          <span className="font-semibold text-emerald-600">{currentSelected}</span>
+                          <span className="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-100">
+                            {currentSelected}
+                          </span>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2.5">
                           {values.map((v) => {
                             const isSelected = currentSelected === v;
                             return (
                               <button
                                 key={v}
                                 onClick={() => handleAttributeSelect(attrKey, v)}
-                                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
                                   isSelected
-                                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                    ? 'bg-slate-950 text-white border-slate-950 shadow-md ring-2 ring-slate-900/10'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                                 }`}
                               >
-                                {v}
+                                {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                                <span>{v}</span>
                               </button>
                             );
                           })}
@@ -328,21 +361,21 @@ export default function ProductDetailPage() {
               )}
 
               {/* Stock Status Bar */}
-              <div className="text-xs font-semibold">
+              <div className="text-xs font-bold">
                 {isOutOfStock ? (
-                  <span className="text-red-600 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                    Currently Out of Stock for this configuration.
+                  <span className="text-rose-600 flex items-center gap-2 bg-rose-50 border border-rose-200 px-3.5 py-2 rounded-xl">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
+                    Currently Out of Stock for this configuration. Choose another variant.
                   </span>
                 ) : currentStock < 5 ? (
-                  <span className="text-amber-600 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    Hurry! Only {currentStock} units left in stock.
+                  <span className="text-amber-800 flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
+                    Hurry! Only {currentStock} units left in stock at our Kano hub.
                   </span>
                 ) : (
-                  <span className="text-emerald-700 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    In Stock ({currentStock} units available) • Ready to dispatch
+                  <span className="text-emerald-800 flex items-center gap-2 bg-emerald-50/80 border border-emerald-200 px-3.5 py-2 rounded-xl">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>In Stock ({currentStock} units available) • Verified & Ready for Fast Dispatch</span>
                   </span>
                 )}
               </div>
@@ -355,15 +388,15 @@ export default function ProductDetailPage() {
                   <button
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                     disabled={quantity <= 1 || isOutOfStock}
-                    className="w-9 h-9 rounded-lg bg-white text-slate-700 font-bold hover:bg-slate-100 disabled:opacity-50 flex items-center justify-center text-sm shadow-xs"
+                    className="w-10 h-10 rounded-lg bg-white text-slate-700 font-extrabold hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center text-sm shadow-xs transition-colors cursor-pointer"
                   >
                     -
                   </button>
-                  <span className="px-4 text-sm font-bold text-slate-900">{quantity}</span>
+                  <span className="px-5 text-sm font-extrabold text-slate-900">{quantity}</span>
                   <button
                     onClick={() => setQuantity((q) => Math.min(currentStock, q + 1))}
                     disabled={quantity >= currentStock || isOutOfStock}
-                    className="w-9 h-9 rounded-lg bg-white text-slate-700 font-bold hover:bg-slate-100 disabled:opacity-50 flex items-center justify-center text-sm shadow-xs"
+                    className="w-10 h-10 rounded-lg bg-white text-slate-700 font-extrabold hover:bg-slate-100 disabled:opacity-40 flex items-center justify-center text-sm shadow-xs transition-colors cursor-pointer"
                   >
                     +
                   </button>
@@ -373,38 +406,38 @@ export default function ProductDetailPage() {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className={`flex-1 w-full py-4 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 ${
+                  className={`flex-1 w-full py-4 rounded-xl font-black text-sm shadow-lg transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99] ${
                     isOutOfStock
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                       : addedSuccess
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow-emerald-500/25'
+                      ? 'bg-emerald-700 text-white shadow-emerald-700/30'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:shadow-xl'
                   }`}
                 >
                   <ShoppingBag className="w-5 h-5" />
                   <span>
-                    {addedSuccess ? '✓ Added to Cart!' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                    {addedSuccess ? '✓ Added to Cart!' : isOutOfStock ? 'Out of Stock' : 'Add to Shopping Cart'}
                   </span>
                 </button>
               </div>
 
               {/* Guarantees Box */}
-              <div className="pt-4 grid grid-cols-2 gap-3 text-xs text-slate-600">
+              <div className="pt-2 grid grid-cols-2 gap-3 text-xs text-slate-600">
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <Truck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Free Kano Delivery</span>
+                  <span className="font-semibold">Free Kano Delivery (₦0)</span>
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>2-Hour Store Pickup</span>
+                  <span className="font-semibold">2-Hour Store Pickup</span>
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Authenticity Guarantee</span>
+                  <span className="font-semibold">Warranty Protected</span>
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Tested Battery Health</span>
+                  <span className="font-semibold">Tested Battery & Hardware</span>
                 </div>
               </div>
 
@@ -412,54 +445,135 @@ export default function ProductDetailPage() {
 
           </div>
 
-          {/* Full Specifications & Long Description */}
-          <div className="mt-16 pt-12 border-t border-slate-200">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              
-              <div className="lg:col-span-7 space-y-4">
-                <h3 className="text-xl font-bold text-slate-900">Product Overview</h3>
-                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-                  {product.description || product.short_description}
-                </p>
-              </div>
+          {/* Full Specifications & Long Description Tabs */}
+          <div className="mt-16 pt-10 border-t border-slate-200">
+            {/* Tabs Selector */}
+            <div className="flex items-center gap-4 border-b border-slate-200 pb-4 mb-8">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${
+                  activeTab === 'overview'
+                    ? 'text-emerald-700'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Product Overview & Features
+                {activeTab === 'overview' && (
+                  <span className="absolute bottom-[-17px] left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('specs')}
+                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${
+                  activeTab === 'specs'
+                    ? 'text-emerald-700'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Detailed Specifications ({product.specifications?.length || 0})
+                {activeTab === 'specs' && (
+                  <span className="absolute bottom-[-17px] left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+                )}
+              </button>
+            </div>
 
-              {/* Technical Specifications Table */}
-              <div className="lg:col-span-5">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Specifications</h3>
+            {activeTab === 'overview' ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8 space-y-4">
+                  <p className="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                    {product.description || product.short_description}
+                  </p>
+                </div>
+                <div className="lg:col-span-4 p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Why Buy from UBAN HARKALLA?</h4>
+                  <ul className="text-xs text-slate-600 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>100% Genuine, tested devices direct from verified distributors</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>Physical inspection before payment available at our store</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>Transparent warranty coverage & after-sales support</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-3xl">
                 {product.specifications && product.specifications.length > 0 ? (
-                  <div className="rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100 text-xs">
+                  <div className="rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100 text-xs sm:text-sm">
                     {product.specifications.map((spec, i) => (
-                      <div key={i} className="flex justify-between p-3.5 bg-slate-50/50">
-                        <span className="font-semibold text-slate-500">{spec.key}</span>
-                        <span className="font-bold text-slate-900 text-right">{spec.value}</span>
+                      <div key={i} className="flex justify-between items-center p-4 bg-slate-50/50 hover:bg-emerald-50/20 transition-colors">
+                        <span className="font-bold text-slate-600">{spec.key}</span>
+                        <span className="font-black text-slate-950 text-right">{spec.value}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400">Detailed specs available upon request.</p>
+                  <p className="text-xs text-slate-400">Detailed specifications available upon request via WhatsApp.</p>
                 )}
               </div>
-
-            </div>
+            )}
           </div>
 
         </div>
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Related Products in this Category
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((rel) => (
-                <ProductCard key={rel.id} product={rel} />
-              ))}
+          <ScrollReveal direction="up">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-950 tracking-tight">
+                    Related Products in this Category
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">Explore other certified smartphones and accessories</p>
+                </div>
+                <Link
+                  to={`/shop?category=${product.category_id}`}
+                  className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                >
+                  <span>View All</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relatedProducts.map((rel) => (
+                  <ProductCard key={rel.id} product={rel} />
+                ))}
+              </div>
             </div>
-          </div>
+          </ScrollReveal>
         )}
 
       </div>
+
+      {/* Sticky Mobile Add to Cart Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 px-4 z-40 flex items-center justify-between gap-3 shadow-lg">
+        <div>
+          <span className="text-xs text-slate-400 line-clamp-1">{product.name}</span>
+          <span className="text-lg font-black text-slate-950">₦{currentPrice.toLocaleString()}</span>
+        </div>
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md ${
+            isOutOfStock
+              ? 'bg-slate-200 text-slate-400'
+              : addedSuccess
+              ? 'bg-emerald-700 text-white'
+              : 'bg-emerald-600 text-white'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4" />
+          <span>{addedSuccess ? 'Added!' : isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
+        </button>
+      </div>
+
     </div>
   );
 }

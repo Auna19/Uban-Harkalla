@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Truck, Sparkles, CheckCircle2, Search } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Truck, Sparkles, CheckCircle2, Search, Smartphone, Headphones, Zap } from 'lucide-react';
+import ScrollReveal from '../common/ScrollReveal';
+import TiltCard from '../common/TiltCard';
 
 export default function HeroSection({ content }) {
   const navigate = useNavigate();
@@ -20,172 +22,193 @@ export default function HeroSection({ content }) {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white py-16 sm:py-24">
-      {/* Decorative background glow circles */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 left-10 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-24 border-b border-slate-800/80">
+      {/* Decorative ambient lighting spheres */}
+      <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none animate-pulse-glow"></div>
+      <div className="absolute bottom-10 left-10 w-96 h-96 bg-amber-500/8 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-10 left-1/3 w-64 h-64 bg-teal-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           
           {/* Left Column: Headlines & CTA */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             
-            {/* Top Brand Tag */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-wide shadow-xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>OFFICIAL UBAN HARKALLA STORE • KANO, NIGERIA</span>
-            </div>
+            {/* Top Brand Tag with Subtle Glow */}
+            <ScrollReveal direction="down" duration={500}>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold tracking-wider uppercase shadow-lg shadow-emerald-500/5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-spin-slow" />
+                <span>OFFICIAL UBAN HARKALLA STORE • KANO, NIGERIA</span>
+              </div>
+            </ScrollReveal>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Your Trusted Destination for{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-200">
-                Premium Smartphones
-              </span>{' '}
-              and Gadgets.
-            </h1>
+            <ScrollReveal direction="up" delay={100} duration={600}>
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.12]">
+                Your Trusted Destination for{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">
+                  Premium Smartphones
+                </span>{' '}
+                and Gadgets.
+              </h1>
+            </ScrollReveal>
 
             {/* Subtext */}
-            <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-              {subtext}
-            </p>
+            <ScrollReveal direction="up" delay={200} duration={600}>
+              <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                {subtext}
+              </p>
+            </ScrollReveal>
 
             {/* Prominent Landing Page Hero Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto lg:mx-0 pt-2">
-              <div className="relative flex items-center bg-white/10 hover:bg-white/15 focus-within:bg-white/20 backdrop-blur-md rounded-2xl p-1.5 border border-white/20 focus-within:border-emerald-400 shadow-xl transition-all">
-                <Search className="w-5 h-5 text-emerald-400 ml-3 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Search iPhones, Samsung, gadgets, accessories..."
-                  value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
-                  className="w-full bg-transparent text-white placeholder-slate-300 text-sm sm:text-base px-3 py-2.5 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-md shrink-0 flex items-center gap-1.5"
-                >
-                  <span>Search</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Popular Quick Filter Pills */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mt-3 text-xs text-slate-300">
-                <span className="text-slate-400 font-semibold">Popular:</span>
-                {['iPhone 15 Pro Max', 'Samsung S24 Ultra', 'AirPods Pro', '20W Charger'].map((term) => (
+            <ScrollReveal direction="up" delay={280} duration={600}>
+              <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto lg:mx-0 pt-2">
+                <div className="relative flex items-center bg-slate-900/80 hover:bg-slate-900 focus-within:bg-slate-900 backdrop-blur-xl rounded-2xl p-2 border border-slate-700/80 focus-within:border-emerald-400 focus-within:ring-4 focus-within:ring-emerald-500/15 shadow-2xl transition-all">
+                  <Search className="w-5 h-5 text-emerald-400 ml-3 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Search iPhones, Samsung, gadgets, accessories..."
+                    value={heroSearch}
+                    onChange={(e) => setHeroSearch(e.target.value)}
+                    className="w-full bg-transparent text-white placeholder-slate-400 text-sm sm:text-base px-3 py-2.5 focus:outline-none"
+                  />
                   <button
-                    key={term}
-                    type="button"
-                    onClick={() => navigate(`/shop?search=${encodeURIComponent(term)}`)}
-                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-200 border border-white/10 hover:border-emerald-400/40 transition-colors"
+                    type="submit"
+                    className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-xl transition-all shadow-md shrink-0 flex items-center gap-1.5 active:scale-95"
                   >
-                    {term}
+                    <span>Search</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
-                ))}
-              </div>
-            </form>
+                </div>
+
+                {/* Popular Quick Filter Pills */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mt-3 text-xs text-slate-300">
+                  <span className="text-slate-400 font-semibold">Popular:</span>
+                  {['iPhone 15 Pro Max', 'Samsung S24 Ultra', 'AirPods Pro', '20W Charger'].map((term) => (
+                    <button
+                      key={term}
+                      type="button"
+                      onClick={() => navigate(`/shop?search=${encodeURIComponent(term)}`)}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-200 border border-white/10 hover:border-emerald-400/40 transition-colors"
+                    >
+                      {term}
+                    </button>
+                  ))}
+                </div>
+              </form>
+            </ScrollReveal>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-              <Link
-                to="/shop"
-                className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-2xl shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 group text-base"
-              >
-                <span>Shop Now</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+            <ScrollReveal direction="up" delay={360} duration={600}>
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+                <Link
+                  to="/shop"
+                  className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black rounded-2xl shadow-xl hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 group text-base active:scale-95"
+                >
+                  <span>Shop Catalogue</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+                </Link>
 
-              <a
-                href="#about"
-                className="w-full sm:w-auto px-8 py-4 bg-slate-800/80 hover:bg-slate-700/80 text-white font-semibold rounded-2xl border border-slate-700 transition-colors flex items-center justify-center text-base"
-              >
-                Learn More
-              </a>
-            </div>
+                <a
+                  href="#about"
+                  className="w-full sm:w-auto px-8 py-4 bg-slate-800/80 hover:bg-slate-700/80 text-white font-semibold rounded-2xl border border-slate-700 transition-colors flex items-center justify-center text-base"
+                >
+                  Learn About Us
+                </a>
+              </div>
+            </ScrollReveal>
 
             {/* Quick Guarantees Grid */}
-            <div className="pt-8 border-t border-slate-800 grid grid-cols-3 gap-4 text-left">
-              <div>
-                <p className="text-emerald-400 font-extrabold text-lg sm:text-xl">FREE</p>
-                <p className="text-xs text-slate-400 mt-0.5">Delivery in Kano</p>
+            <ScrollReveal direction="up" delay={420} duration={600}>
+              <div className="pt-8 border-t border-slate-800/80 grid grid-cols-3 gap-4 text-left">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-xs">
+                  <p className="text-emerald-400 font-black text-lg sm:text-xl">FREE</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Delivery in Kano</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-xs">
+                  <p className="text-emerald-400 font-black text-lg sm:text-xl">100%</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Genuine Guarantee</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-xs">
+                  <p className="text-emerald-400 font-black text-lg sm:text-xl">2-Hour</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Physical Pickup</p>
+                </div>
               </div>
-              <div>
-                <p className="text-emerald-400 font-extrabold text-lg sm:text-xl">100%</p>
-                <p className="text-xs text-slate-400 mt-0.5">Genuine Guarantee</p>
-              </div>
-              <div>
-                <p className="text-emerald-400 font-extrabold text-lg sm:text-xl">2-Hour</p>
-                <p className="text-xs text-slate-400 mt-0.5">Physical Pickup</p>
-              </div>
-            </div>
+            </ScrollReveal>
 
           </div>
 
-          {/* Right Column: Visual Product Showcase Collage */}
+          {/* Right Column: Visual Product Showcase with Tilt & Ambient Depth */}
           <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
-              
-              {/* Main Showcase Card */}
-              <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-slate-800/50 shadow-2xl backdrop-blur-sm group">
-                <img
-                  src="/1001102628.jpg"
-                  alt="Premium Apple iPhones and Gadgets"
-                  className="w-full h-80 sm:h-96 object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+            <ScrollReveal direction="zoom" delay={200} duration={700}>
+              <div className="relative mx-auto max-w-md lg:max-w-none">
                 
-                {/* Floating Overlay Badge on Image */}
-                <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700 flex items-center justify-between">
+                {/* Ambient dynamic back-glow behind device card */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-amber-500/20 rounded-3xl blur-2xl opacity-75 animate-pulse-glow" />
+
+                {/* Main 3D Tilt Showcase Card */}
+                <TiltCard maxTilt={8} scale={1.02} className="rounded-3xl overflow-hidden border border-slate-700/80 bg-slate-900/90 shadow-2xl backdrop-blur-md group">
+                  <div className="relative overflow-hidden h-84 sm:h-96">
+                    <img
+                      src="/1001102628.jpg"
+                      alt="Premium Apple iPhones and Gadgets"
+                      className="w-full h-full object-cover object-center animate-ken-burns group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
+                  </div>
+                  
+                  {/* Floating Overlay Card on Image */}
+                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-slate-700/80 flex items-center justify-between shadow-xl">
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-emerald-400" />
+                        Flagship Selection
+                      </span>
+                      <h3 className="font-extrabold text-white text-sm sm:text-base mt-0.5">
+                        Apple iPhones & Androids
+                      </h3>
+                      <p className="text-xs text-slate-400">Brand New & Certified Pre-Owned</p>
+                    </div>
+                    <Link
+                      to="/shop"
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs transition-colors shrink-0 shadow-md active:scale-95"
+                    >
+                      Explore
+                    </Link>
+                  </div>
+                </TiltCard>
+
+                {/* Floating Top Badge */}
+                <div className="absolute -top-5 -left-5 sm:-left-7 bg-slate-950/95 border border-slate-700/90 rounded-2xl p-3 shadow-2xl backdrop-blur-md flex items-center gap-3 animate-float">
+                  <img
+                    src="/Logo.jpg"
+                    alt="UBAN HARKALLA Logo"
+                    className="w-10 h-10 rounded-xl object-contain border border-slate-700"
+                  />
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
-                      Flagship Selection
-                    </span>
-                    <h3 className="font-bold text-white text-sm sm:text-base">
-                      Apple iPhones & Androids
-                    </h3>
-                    <p className="text-xs text-slate-400">Brand New & Certified Pre-Owned</p>
+                    <div className="flex items-center gap-1 text-emerald-400 font-extrabold text-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Verified Genuine
+                    </div>
+                    <span className="text-[11px] text-slate-400">Official Direct Importer</span>
                   </div>
-                  <Link
-                    to="/shop"
-                    className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs transition-colors shrink-0"
-                  >
-                    Explore
-                  </Link>
                 </div>
-              </div>
 
-              {/* Floating Pill Mini Card */}
-              <div className="absolute -top-6 -left-6 sm:-left-8 bg-slate-900/95 border border-slate-700/80 rounded-2xl p-3 shadow-xl backdrop-blur-md flex items-center gap-3">
-                <img
-                  src="/Logo.jpg"
-                  alt="UBAN HARKALLA Logo"
-                  className="w-10 h-10 rounded-xl object-contain"
-                />
-                <div>
-                  <div className="flex items-center gap-1 text-emerald-400 font-bold text-xs">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Verified Genuine
+                {/* Floating Second Thumbnail */}
+                <div className="absolute -bottom-5 -right-4 sm:-right-6 bg-slate-950/95 border border-slate-700/90 rounded-2xl p-2.5 shadow-2xl backdrop-blur-md flex items-center gap-3 max-w-[210px] animate-float" style={{ animationDelay: '2.5s' }}>
+                  <img
+                    src="/1001102636.jpg"
+                    alt="Accessories"
+                    className="w-11 h-11 rounded-xl object-cover border border-slate-700"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-white">Original Tech</p>
+                    <p className="text-[10px] font-semibold text-emerald-400">Accessories In Stock</p>
                   </div>
-                  <span className="text-[11px] text-slate-400">Direct Importer</span>
                 </div>
-              </div>
 
-              {/* Floating Second Thumbnail */}
-              <div className="absolute -bottom-6 -right-4 sm:-right-6 bg-slate-900/95 border border-slate-700/80 rounded-2xl p-2.5 shadow-xl backdrop-blur-md flex items-center gap-3 max-w-[200px]">
-                <img
-                  src="/1001102636.jpg"
-                  alt="Accessories"
-                  className="w-11 h-11 rounded-xl object-cover"
-                />
-                <div>
-                  <p className="text-xs font-bold text-white">Original Tech</p>
-                  <p className="text-[10px] text-emerald-400">Accessories In Stock</p>
-                </div>
               </div>
-
-            </div>
+            </ScrollReveal>
           </div>
 
         </div>
