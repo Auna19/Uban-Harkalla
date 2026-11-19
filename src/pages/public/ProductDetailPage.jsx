@@ -120,10 +120,41 @@ export default function ProductDetailPage() {
   }, [product]);
 
   const handleAttributeSelect = (attrKey, val) => {
-    setSelectedAttributes((prev) => ({
-      ...prev,
-      [attrKey]: val,
-    }));
+    if (!product?.variations || product.variations.length === 0) {
+      setSelectedAttributes((prev) => ({ ...prev, [attrKey]: val }));
+      return;
+    }
+
+    const candidate = { ...selectedAttributes, [attrKey]: val };
+    const exact = product.variations.find(
+      (v) => v.attributes && Object.entries(candidate).every(([k, vVal]) => v.attributes[k] === vVal)
+    );
+
+    if (exact) {
+      setSelectedAttributes(candidate);
+    } else {
+      // Find a variation that contains this attribute value and has the closest match
+      const matching = product.variations.filter(
+        (v) => v.attributes && v.attributes[attrKey] === val
+      );
+      if (matching.length > 0) {
+        let best = matching[0];
+        let maxMatches = -1;
+        matching.forEach((v) => {
+          let score = 0;
+          Object.entries(selectedAttributes).forEach(([k, currentVal]) => {
+            if (k !== attrKey && v.attributes[k] === currentVal) score++;
+          });
+          if (score > maxMatches) {
+            maxMatches = score;
+            best = v;
+          }
+        });
+        setSelectedAttributes({ ...best.attributes });
+      } else {
+        setSelectedAttributes(candidate);
+      }
+    }
   };
 
   const handleAddToCart = () => {

@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 import {
   INITIAL_CATEGORIES,
   INITIAL_BRANDS,
@@ -9,7 +9,7 @@ import {
   INITIAL_TESTIMONIALS,
   INITIAL_ORDERS,
   INITIAL_BUSINESS_SETTINGS,
-} from './initialData';
+} from './initialData.js';
 
 // Local storage keys for standalone / client-side resilience
 const STORAGE_KEYS = {

@@ -66,22 +66,22 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Search Bar */}
-          <form onSubmit={handleSearchSubmit} className="hidden lg:flex items-center flex-1 max-w-md mx-6">
+          {/* Desktop & Tablet Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center flex-1 min-w-[260px] max-w-lg mx-3 xl:mx-6">
             <div className="relative w-full">
               <input
                 type="text"
-                placeholder="Search iPhones, Samsung, gadgets, accessories..."
+                placeholder="Search phones, gadgets, accessories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-100 hover:bg-slate-50 focus:bg-white text-sm text-slate-800 placeholder-slate-400 rounded-full pl-11 pr-4 py-2.5 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="w-full bg-slate-100 hover:bg-slate-50 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 rounded-full pl-9 pr-4 py-2.5 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-2xs"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
           </form>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden xl:flex items-center gap-6 shrink-0">
             {navLinks.map((link) => (
               <NavLink
                 key={link.path}
@@ -102,7 +102,7 @@ export default function Navbar() {
             
             {/* Shopping Cart Button with Live Counter Badge */}
             <Link
-              to="/dashboard/cart"
+              to="/cart"
               className="relative p-2.5 rounded-full hover:bg-slate-100 text-slate-700 transition-colors flex items-center justify-center group"
               title="Shopping Cart"
             >
@@ -208,10 +208,10 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Mobile Menu Hamburger Button */}
+            {/* Mobile & Tablet Menu Hamburger Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 md:hidden"
+              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 xl:hidden"
               aria-label="Toggle navigation"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -222,7 +222,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-6 space-y-4">
+        <div className="xl:hidden border-t border-slate-100 bg-white px-4 pt-3 pb-6 space-y-4 shadow-lg animate-slide-down">
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"

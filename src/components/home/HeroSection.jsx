@@ -1,13 +1,23 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Truck, Sparkles, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, ShieldCheck, Truck, Sparkles, CheckCircle2, Search } from 'lucide-react';
 
 export default function HeroSection({ content }) {
+  const navigate = useNavigate();
+  const [heroSearch, setHeroSearch] = useState('');
+
   const headline =
     content?.headline || 'Your Trusted Destination for Premium Smartphones and Gadgets.';
   const subtext =
     content?.subtext ||
     'Discover quality smartphones, essential gadgets, and accessories at competitive prices. Shop with confidence and enjoy a convenient shopping experience with UBAN HARKALLA.';
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (heroSearch.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(heroSearch.trim())}`);
+    }
+  };
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white py-16 sm:py-24">
@@ -41,8 +51,44 @@ export default function HeroSection({ content }) {
               {subtext}
             </p>
 
+            {/* Prominent Landing Page Hero Search Bar */}
+            <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto lg:mx-0 pt-2">
+              <div className="relative flex items-center bg-white/10 hover:bg-white/15 focus-within:bg-white/20 backdrop-blur-md rounded-2xl p-1.5 border border-white/20 focus-within:border-emerald-400 shadow-xl transition-all">
+                <Search className="w-5 h-5 text-emerald-400 ml-3 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search iPhones, Samsung, gadgets, accessories..."
+                  value={heroSearch}
+                  onChange={(e) => setHeroSearch(e.target.value)}
+                  className="w-full bg-transparent text-white placeholder-slate-300 text-sm sm:text-base px-3 py-2.5 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-sm rounded-xl transition-all shadow-md shrink-0 flex items-center gap-1.5"
+                >
+                  <span>Search</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Popular Quick Filter Pills */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mt-3 text-xs text-slate-300">
+                <span className="text-slate-400 font-semibold">Popular:</span>
+                {['iPhone 15 Pro Max', 'Samsung S24 Ultra', 'AirPods Pro', '20W Charger'].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => navigate(`/shop?search=${encodeURIComponent(term)}`)}
+                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-200 border border-white/10 hover:border-emerald-400/40 transition-colors"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </form>
+
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
               <Link
                 to="/shop"
                 className="w-full sm:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-2xl shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 group text-base"

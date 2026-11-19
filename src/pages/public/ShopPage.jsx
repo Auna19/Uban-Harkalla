@@ -59,16 +59,13 @@ export default function ShopPage() {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // Search term
+    // Search term (intelligent tokenized word matching)
     if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(term) ||
-          p.brand_name?.toLowerCase().includes(term) ||
-          p.category_name?.toLowerCase().includes(term) ||
-          p.short_description?.toLowerCase().includes(term)
-      );
+      const tokens = searchTerm.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      result = result.filter((p) => {
+        const searchable = `${p.name} ${p.brand_name || ''} ${p.category_name || ''} ${p.short_description || ''} ${p.slug || ''}`.toLowerCase();
+        return tokens.every((token) => searchable.includes(token));
+      });
     }
 
     // Category
