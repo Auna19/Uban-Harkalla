@@ -76,16 +76,16 @@ npm run preview
 
 ---
 
-## 🔐 Pre-Configured Accounts for Instant Evaluation
+## 🔐 Authentication & Access Portals
 
-The system comes pre-seeded with verified test accounts:
+The platform provides secure, role-based access for customers and administrative staff, complete with interactive password mask/unmask visibility toggles:
 
-| Role | Email | Password | Access Rights |
+| Portal | URL Route | Access Level | Description |
 | :--- | :--- | :--- | :--- |
-| **Super Admin** | `admin@ubanharkalla.com` | `admin123` | Full administrative control over products, variations, orders, content, delivery, and staff |
-| **Customer** | `customer@ubanharkalla.com` | `customer123` | Customer dashboard, saved addresses, order history, and personal profile |
+| **Customer Portal** | `/login` / `/signup` | Customer | Order history, real-time tracking, saved delivery addresses, and personal profile management |
+| **Staff & Admin Portal** | `/admin/login` | Staff / Admin | Complete administrative store control: product matrix, inventory stock, order fulfillment, delivery zones, and customer records |
 
-> **Note:** The Admin Dashboard can also be directly accessed via `/admin/login`. Ordinary customers cannot access administrative endpoints.
+> **Security & Privacy Note:** Sensitive credentials and environment configurations are strictly managed through local environment files (`.env`) and Neon secret management. Plaintext passwords or connection secrets are never stored in source control.
 
 ---
 
@@ -104,13 +104,23 @@ The complete production SQL migration is provided at `neon/schema.sql`.
 8. `business_settings` (Store operating hours, contact information, and bank transfer credentials)
 9. `audit_logs` (Administrative action tracking)
 
-### How to Apply Schema in Neon
-1. Open your Neon project dashboard at [https://neon.tech](https://neon.tech) (or via the Vercel Storage integration).
+### Automated Setup & Verification
+Run the automated deployment and verification scripts:
+```bash
+# Apply schema and seed data directly to Neon
+node scripts/migrate-neon.mjs
+
+# Verify all 16 tables and perform round-trip CRUD verification
+node scripts/verify-e2e-neon.mjs
+```
+
+Or connect manually:
+1. Open your Neon project dashboard at [https://console.neon.tech](https://console.neon.tech).
 2. Open the **SQL Editor** tab.
 3. Paste the contents of `neon/schema.sql` and click **Run**.
 4. In your `.env` file, supply your project connection string:
    ```env
-   VITE_NEON_DATABASE_URL=postgresql://user:password@ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require
+   VITE_NEON_DATABASE_URL=postgresql://<user>:<password>@<endpoint>.neon.tech/neondb?sslmode=require
    ```
 
 ---
