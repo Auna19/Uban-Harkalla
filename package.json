@@ -25,6 +25,8 @@
     "postinstall": "node scripts/patch-rollup.js"
   },
   "dependencies": {
+    "@neon/config": "^1.14.4",
+    "@neon/env": "^2.1.7",
     "@neondatabase/serverless": "^1.2.1",
     "@rollup/wasm-node": "^4.68.7",
     "canvas-confetti": "^1.9.4",

@@ -1,6 +1,11 @@
 import { neon } from '@neondatabase/serverless';
 
-const databaseUrl = import.meta.env?.VITE_NEON_DATABASE_URL;
+const rawUrl =
+  import.meta.env?.VITE_NEON_DATABASE_URL ||
+  import.meta.env?.VITE_DATABASE_URL ||
+  '';
+
+const databaseUrl = rawUrl.trim().replace(/^["']|["']$/g, '');
 
 export const isNeonConfigured = Boolean(
   databaseUrl &&
