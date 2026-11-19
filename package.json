@@ -2,7 +2,22 @@
   "name": "uban-harkalla",
   "private": true,
   "version": "1.0.0",
+  "description": "Premium e-commerce platform for smartphones, gadgets, and accessories powered by React, Tailwind CSS, and Neon Serverless PostgreSQL.",
   "type": "module",
+  "keywords": [
+    "ecommerce",
+    "smartphones",
+    "gadgets",
+    "react",
+    "tailwind",
+    "neon-postgres",
+    "nigeria"
+  ],
+  "author": "UBAN HARKALLA",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Auna19/Uban-Harkalla.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
