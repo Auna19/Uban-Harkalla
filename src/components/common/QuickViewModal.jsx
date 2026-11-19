@@ -280,12 +280,16 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
             </button>
 
             <Link
-              to={`/product/${product.slug}`}
-              onClick={onClose}
-              className="w-full py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:text-emerald-700 hover:bg-emerald-50/50 transition-colors flex items-center justify-center gap-1.5 border border-slate-200/80"
+              to={`/product/${product.slug}#specs`}
+              state={{ tab: 'specs' }}
+              onClick={() => {
+                document.body.style.overflow = '';
+                onClose();
+              }}
+              className="w-full py-3 rounded-2xl text-xs font-black text-emerald-800 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-950 transition-colors flex items-center justify-center gap-2 border border-emerald-200/80 shadow-2xs cursor-pointer"
             >
               <span>View Full Device Specifications</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AudioProvider } from './context/AudioContext';
 import { AuthProvider } from './context/AuthContext';
@@ -55,6 +55,14 @@ import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 function AppLayout({ children }) {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin') && location.pathname !== '/admin/login';
+
+  // Always restore body scroll on any route navigation
+  useEffect(() => {
+    document.body.style.overflow = '';
+    if (!location.hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
 
   return (
     <div className="flex flex-col min-h-screen">

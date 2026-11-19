@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { getProductBySlug, getProducts } from '../../services/dataService';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/common/ProductCard';
@@ -23,6 +23,7 @@ import {
 export default function ProductDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -36,7 +37,27 @@ export default function ProductDetailPage() {
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [quantity, setQuantity] = useState(1);
   const [addedSuccess, setAddedSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'specs'
+  const [activeTab, setActiveTab] = useState(() => {
+    return window.location.hash === '#specs' ? 'specs' : 'overview';
+  });
+
+  // Handle route, hash, and body overflow unlocking
+  useEffect(() => {
+    document.body.style.overflow = '';
+    const wantsSpecs = location.hash === '#specs' || location.state?.tab === 'specs';
+    if (wantsSpecs) {
+      setActiveTab('specs');
+      const timer = setTimeout(() => {
+        const el = document.getElementById('specs-section');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [slug, location.hash, location.state]);
 
   useEffect(() => {
     async function loadProduct() {
@@ -443,29 +464,43 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Full Specifications & Long Description Tabs */}
-          <div className="mt-16 pt-10 border-t border-slate-200">
+          <div id="specs-section" className="mt-16 pt-10 border-t border-slate-200">
             {/* Tabs Selector */}
-            <div className="flex items-center gap-4 border-b border-slate-200 pb-4 mb-8">
+            <div className="flex items-center gap-4 sm:gap-6 border-b border-slate-200 pb-4 mb-8 overflow-x-auto">
               <button
+                type="button"
                 onClick={() => setActiveTab('overview')}
-                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${activeTab === 'overview'
-                  ? 'text-emerald-700'
-                  : 'text-slate-400 hover:text-slate-600'
-                  }`}
+                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-2 relative flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'overview'
+                    ? 'text-emerald-700'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
               >
-                Product Overview & Features
+                <span>Product Overview & Features</span>
                 {activeTab === 'overview' && (
                   <span className="absolute bottom-[-17px] left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
                 )}
               </button>
+
               <button
+                type="button"
                 onClick={() => setActiveTab('specs')}
-                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${activeTab === 'specs'
-                  ? 'text-emerald-700'
-                  : 'text-slate-400 hover:text-slate-600'
-                  }`}
+                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-2 relative flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'specs'
+                    ? 'text-emerald-700'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
               >
-                Detailed Specifications ({product.specifications?.length || 0})
+                <span>Full Technical Specifications</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                    activeTab === 'specs'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {product.specifications?.length || 0}
+                </span>
                 {activeTab === 'specs' && (
                   <span className="absolute bottom-[-17px] left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
                 )}
@@ -478,10 +513,23 @@ export default function ProductDetailPage() {
                   <p className="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-line font-normal">
                     {product.description || product.short_description}
                   </p>
+
+                  {/* Button to view specs quickly */}
+                  <div className="pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('specs')}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 px-4 py-2.5 rounded-xl border border-emerald-200/80 transition-colors cursor-pointer"
+                    >
+                      <span>Jump to Detailed Technical Specifications</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
+
                 <div className="lg:col-span-4 p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Why Buy from UBAN HARKALLA?</h4>
-                  <ul className="text-xs text-slate-600 space-y-2">
+                  <ul className="text-xs text-slate-600 space-y-2.5">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                       <span>100% Genuine, tested devices direct from verified distributors</span>
@@ -498,19 +546,76 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             ) : (
-              <div className="max-w-3xl">
-                {product.specifications && product.specifications.length > 0 ? (
-                  <div className="rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100 text-xs sm:text-sm">
-                    {product.specifications.map((spec, i) => (
-                      <div key={i} className="flex justify-between items-center p-4 bg-slate-50/50 hover:bg-emerald-50/20 transition-colors">
-                        <span className="font-bold text-slate-600">{spec.key}</span>
-                        <span className="font-black text-slate-950 text-right">{spec.value}</span>
-                      </div>
-                    ))}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Specs Table */}
+                <div className="lg:col-span-8 space-y-4">
+                  <div className="flex items-center justify-between pb-2">
+                    <h4 className="text-base sm:text-lg font-black text-slate-950 flex items-center gap-2">
+                      <span>Hardware & System Specifications</span>
+                    </h4>
+                    <span className="text-xs font-bold text-slate-400">
+                      {product.brand_name} Official Specs
+                    </span>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400">Detailed specifications available upon request via WhatsApp.</p>
-                )}
+
+                  {product.specifications && product.specifications.length > 0 ? (
+                    <div className="rounded-2xl border border-slate-200 overflow-hidden divide-y divide-slate-100 shadow-2xs">
+                      {product.specifications.map((spec, i) => (
+                        <div
+                          key={i}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white hover:bg-emerald-50/20 transition-colors gap-1 sm:gap-4"
+                        >
+                          <span className="font-bold text-xs sm:text-sm text-slate-500 uppercase tracking-wide sm:w-1/3">
+                            {spec.key}
+                          </span>
+                          <span className="font-black text-xs sm:text-sm text-slate-950 sm:text-right sm:w-2/3">
+                            {spec.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                      <p className="text-xs text-slate-500">Detailed specifications available upon request via WhatsApp.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Side Config Summary */}
+                <div className="lg:col-span-4 space-y-4">
+                  <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white space-y-3.5 shadow-lg">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                      Current Selection
+                    </span>
+                    <h5 className="font-black text-base text-white">{product.name}</h5>
+                    {matchedVariation && matchedVariation.attributes && (
+                      <div className="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                        {Object.entries(matchedVariation.attributes).map(([k, v]) => (
+                          <div key={k} className="flex justify-between items-center">
+                            <span className="capitalize text-slate-400 font-medium">{k}:</span>
+                            <span className="font-extrabold text-white bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                              {v}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
+                      <span className="text-slate-400 font-semibold">Active Price:</span>
+                      <span className="text-lg font-black text-emerald-400">₦{currentPrice?.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-2 font-bold text-slate-900">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Certified Quality & Testing</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-slate-500">
+                      Every phone and gadget undergoes rigorous physical and software diagnostics: display calibration, biometric security, camera optics, and battery health verification.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
