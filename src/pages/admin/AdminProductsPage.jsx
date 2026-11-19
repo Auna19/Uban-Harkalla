@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -20,6 +21,7 @@ export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCat, setSelectedCat] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -41,11 +43,11 @@ export default function AdminProductsPage() {
     fetchProducts();
   }, []);
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete product "${name}"? This action cannot be undone.`)) {
-      await deleteProduct(id);
-      fetchProducts();
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteProduct(deleteTarget.id);
+    setDeleteTarget(null);
+    fetchProducts();
   };
 
   const handleToggleFeatured = async (product) => {
@@ -242,7 +244,7 @@ export default function AdminProductsPage() {
                           <Edit className="w-4 h-4" />
                         </Link>
                         <button
-                          onClick={() => handleDelete(prod.id, prod.name)}
+                          onClick={() => setDeleteTarget(prod)}
                           className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-slate-800"
                           title="Delete Product"
                         >
@@ -257,6 +259,17 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+
+      {/* Confirmation Modal for Product Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Product from Store?"
+        message="Are you sure you want to delete this product? All configured attributes, variations, and photography mappings will be permanently removed from the storefront."
+        itemName={deleteTarget?.name}
+        confirmText="Delete Product"
+      />
 
     </div>
   );

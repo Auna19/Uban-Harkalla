@@ -7,11 +7,13 @@ import {
   saveWebsiteContent,
 } from '../../services/dataService';
 import { Truck, Store, Plus, Edit, Trash2, CheckCircle2, Save } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function AdminDeliveryPage() {
   const [locations, setLocations] = useState([]);
   const [pickup, setPickup] = useState({ address: '', workingHours: '', instructions: '' });
   const [editingLoc, setEditingLoc] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ state: '', city: '', fee: 0, estimated_days: '1-2 business days' });
   const [showModal, setShowModal] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
@@ -59,11 +61,11 @@ export default function AdminDeliveryPage() {
     load();
   };
 
-  const handleDeleteLocation = async (id, state) => {
-    if (window.confirm(`Delete delivery rates for ${state}?`)) {
-      await deleteDeliveryLocation(id);
-      load();
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteDeliveryLocation(deleteTarget.id);
+    setDeleteTarget(null);
+    load();
   };
 
   const handleSavePickup = async (e) => {
@@ -149,7 +151,7 @@ export default function AdminDeliveryPage() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteLocation(loc.id, loc.state)}
+                        onClick={() => setDeleteTarget(loc)}
                         className="p-1.5 rounded-lg text-red-400 hover:bg-slate-900"
                         title="Delete"
                       >
@@ -301,6 +303,17 @@ export default function AdminDeliveryPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Delivery Location Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Delivery Zone Rates?"
+        message="Are you sure you want to delete delivery charges for this region? Customers selecting this location during checkout will not see custom rates."
+        itemName={deleteTarget ? `${deleteTarget.state} - ${deleteTarget.city} (₦${Number(deleteTarget.fee).toLocaleString()})` : ''}
+        confirmText="Delete Location"
+      />
 
     </div>
   );

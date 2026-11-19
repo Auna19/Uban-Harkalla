@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function AdminProductFormPage() {
   const { id } = useParams();
@@ -28,6 +29,7 @@ export default function AdminProductFormPage() {
   const [brands, setBrands] = useState([]);
   const [attributesMaster, setAttributesMaster] = useState([]);
   const [loading, setLoading] = useState(isEditing);
+  const [deleteVariationTarget, setDeleteVariationTarget] = useState(null);
 
   // Form State
   const [name, setName] = useState('');
@@ -421,8 +423,8 @@ export default function AdminProductFormPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleRemoveVariation(idx)}
-                      className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                      onClick={() => setDeleteVariationTarget({ idx, v })}
+                      className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 font-semibold"
                     >
                       <Trash2 className="w-3.5 h-3.5" /> Remove
                     </button>
@@ -527,6 +529,26 @@ export default function AdminProductFormPage() {
         </div>
 
       </form>
+
+      {/* Confirmation Modal for Variation Removal */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteVariationTarget)}
+        onClose={() => setDeleteVariationTarget(null)}
+        onConfirm={() => {
+          if (deleteVariationTarget !== null) {
+            handleRemoveVariation(deleteVariationTarget.idx);
+            setDeleteVariationTarget(null);
+          }
+        }}
+        title="Remove Product Variation?"
+        message="Are you sure you want to remove this variation? Price, SKU, and allocated stock for this variation will be removed."
+        itemName={
+          deleteVariationTarget
+            ? `Variation #${deleteVariationTarget.idx + 1}: ${deleteVariationTarget.v.sku || 'No SKU'} (${Object.values(deleteVariationTarget.v.attributes || {}).filter(Boolean).join(' / ') || 'Standard'})`
+            : ''
+        }
+        confirmText="Remove Variation"
+      />
 
     </div>
   );

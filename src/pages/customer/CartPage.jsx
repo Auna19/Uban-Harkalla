@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { getDeliveryLocations } from '../../services/dataService';
 import { Trash2, ShoppingBag, ArrowRight, ArrowLeft, Tag, Truck, ShieldCheck } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function CartPage() {
   const {
@@ -25,6 +26,39 @@ export default function CartPage() {
   const [locations, setLocations] = useState([]);
   const [promoInput, setPromoInput] = useState('');
   const [promoMessage, setPromoMessage] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    type: '', // 'item' | 'clear'
+    itemId: null,
+    itemName: '',
+  });
+
+  const handleOpenRemoveItem = (item) => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'item',
+      itemId: item.id,
+      itemName: `${item.product_name}${item.variation_details ? ` (${item.variation_details})` : ''}`,
+    });
+  };
+
+  const handleOpenClearCart = () => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'clear',
+      itemId: null,
+      itemName: '',
+    });
+  };
+
+  const handleConfirmAction = () => {
+    if (confirmModal.type === 'item' && confirmModal.itemId) {
+      removeFromCart(confirmModal.itemId);
+    } else if (confirmModal.type === 'clear') {
+      clearCart();
+    }
+    setConfirmModal({ isOpen: false, type: '', itemId: null, itemName: '' });
+  };
 
   useEffect(() => {
     async function loadLocations() {
@@ -82,7 +116,7 @@ export default function CartPage() {
             <p className="text-xs text-slate-500 mt-1">Review your items, select your delivery option, and proceed.</p>
           </div>
           <button
-            onClick={clearCart}
+            onClick={handleOpenClearCart}
             className="text-xs text-red-600 hover:text-red-700 font-semibold hover:underline"
           >
             Clear Entire Cart
@@ -146,7 +180,7 @@ export default function CartPage() {
 
                   {/* Remove Button */}
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => handleOpenRemoveItem(item)}
                     className="p-2 text-slate-400 hover:text-red-600 transition-colors"
                     title="Remove item"
                   >
@@ -278,6 +312,21 @@ export default function CartPage() {
         </div>
 
       </div>
+
+      {/* Confirmation Modal for Cart item removal and clearing */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: '', itemId: null, itemName: '' })}
+        onConfirm={handleConfirmAction}
+        title={confirmModal.type === 'clear' ? 'Clear Entire Shopping Cart?' : 'Remove Item From Cart?'}
+        message={
+          confirmModal.type === 'clear'
+            ? 'Are you sure you want to remove all items from your cart? Your selection will be emptied.'
+            : 'Are you sure you want to remove this item from your cart?'
+        }
+        itemName={confirmModal.itemName}
+        confirmText={confirmModal.type === 'clear' ? 'Yes, Clear Cart' : 'Remove Item'}
+      />
     </div>
   );
 }

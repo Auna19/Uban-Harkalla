@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Users, Shield, Plus, CheckCircle2, Trash2 } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 const INITIAL_STAFF = [
   {
@@ -28,6 +29,7 @@ export default function AdminUsersPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', role: 'admin' });
+  const [revokeTarget, setRevokeTarget] = useState(null);
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -123,7 +125,13 @@ export default function AdminUsersPage() {
                   <td className="py-3.5 px-4 text-right">
                     {s.role !== 'super_admin' && (
                       <button
-                        onClick={() => handleToggle(s.id)}
+                        onClick={() => {
+                          if (s.is_active) {
+                            setRevokeTarget(s);
+                          } else {
+                            handleToggle(s.id);
+                          }
+                        }}
                         className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
                           s.is_active
                             ? 'text-red-400 hover:bg-slate-900'
@@ -202,6 +210,23 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Staff Access Revocation */}
+      <ConfirmationModal
+        isOpen={Boolean(revokeTarget)}
+        onClose={() => setRevokeTarget(null)}
+        onConfirm={() => {
+          if (revokeTarget) {
+            handleToggle(revokeTarget.id);
+            setRevokeTarget(null);
+          }
+        }}
+        title="Revoke Staff Dashboard Access?"
+        message="Are you sure you want to suspend this staff user's administrative access? They will immediately be locked out of the administration dashboard until restored."
+        itemName={revokeTarget ? `${revokeTarget.name} (${revokeTarget.email})` : ''}
+        confirmText="Revoke Access"
+      />
+
     </div>
   );
 }

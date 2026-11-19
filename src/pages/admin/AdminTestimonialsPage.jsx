@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getTestimonials, saveTestimonial, deleteTestimonial } from '../../services/dataService';
 import { Star, CheckCircle2, XCircle, Trash2, Edit, Plus, Quote } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function AdminTestimonialsPage() {
   const [list, setList] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ customer_name: '', customer_role: '', content: '', rating: 5, is_approved: true });
 
   const load = async () => {
@@ -24,11 +26,11 @@ export default function AdminTestimonialsPage() {
     load();
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete this testimonial?')) {
-      await deleteTestimonial(id);
-      load();
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteTestimonial(deleteTarget.id);
+    setDeleteTarget(null);
+    load();
   };
 
   const handleSave = async (e) => {
@@ -107,8 +109,9 @@ export default function AdminTestimonialsPage() {
                   {item.is_approved ? 'Unpublish' : 'Approve'}
                 </button>
                 <button
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => setDeleteTarget(item)}
                   className="p-1 text-red-400 hover:text-red-300"
+                  title="Delete"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -188,6 +191,18 @@ export default function AdminTestimonialsPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Testimonial Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Testimonial Review?"
+        message="Are you sure you want to delete this customer review? It will be permanently removed from the storefront testimonials section."
+        itemName={deleteTarget ? `${deleteTarget.customer_name}: "${deleteTarget.content?.slice(0, 50)}..."` : ''}
+        confirmText="Delete Review"
+      />
+
     </div>
   );
 }

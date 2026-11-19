@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { MapPin, Plus, Trash2, CheckCircle2, Home, Building } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 const ADDRESS_STORAGE_KEY = 'ubh_customer_saved_addresses';
 
 export default function CustomerAddressesPage() {
   const { user, profile } = useAuth();
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [addresses, setAddresses] = useState(() => {
     try {
       const raw = localStorage.getItem(`${ADDRESS_STORAGE_KEY}_${user?.id || 'demo'}`);
@@ -148,8 +150,8 @@ export default function CustomerAddressesPage() {
 
               <div className="pt-4 mt-3 border-t border-slate-200/60 flex items-center justify-end gap-3">
                 <button
-                  onClick={() => handleDelete(addr.id)}
-                  className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                  onClick={() => setDeleteTarget(addr)}
+                  className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 font-semibold"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Remove
@@ -275,6 +277,22 @@ export default function CustomerAddressesPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Address Removal */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            handleDelete(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        title="Delete Saved Address?"
+        message="Are you sure you want to remove this delivery address? You will need to re-enter it for future orders."
+        itemName={deleteTarget ? `${deleteTarget.label}: ${deleteTarget.street_address}, ${deleteTarget.city}` : ''}
+        confirmText="Delete Address"
+      />
 
     </div>
   );

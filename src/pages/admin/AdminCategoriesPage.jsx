@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getCategories, saveCategory, deleteCategory } from '../../services/dataService';
 import { Layers, Plus, Edit, Trash2, CheckCircle2, Save, X } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ name: '', slug: '', description: '', image_url: '/1001102628.jpg', is_active: true });
 
   const load = async () => {
@@ -45,11 +47,11 @@ export default function AdminCategoriesPage() {
     load();
   };
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Delete category "${name}"?`)) {
-      await deleteCategory(id);
-      load();
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteCategory(deleteTarget.id);
+    setDeleteTarget(null);
+    load();
   };
 
   return (
@@ -107,7 +109,7 @@ export default function AdminCategoriesPage() {
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => handleDelete(cat.id, cat.name)}
+                  onClick={() => setDeleteTarget(cat)}
                   className="p-1.5 rounded-lg text-red-400 hover:bg-slate-900"
                   title="Delete Category"
                 >
@@ -200,6 +202,17 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Category Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Category?"
+        message="Are you sure you want to delete this category? Products linked to this category may need to be recategorized."
+        itemName={deleteTarget?.name}
+        confirmText="Delete Category"
+      />
 
     </div>
   );

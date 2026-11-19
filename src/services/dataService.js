@@ -148,6 +148,21 @@ export async function saveBrand(brand) {
   return updated;
 }
 
+export async function deleteBrand(id) {
+  const current = getStoredData(STORAGE_KEYS.BRANDS, INITIAL_BRANDS);
+  const updated = current.filter((b) => b.id !== id);
+  saveStoredData(STORAGE_KEYS.BRANDS, updated);
+
+  if (isNeonConfigured && sql) {
+    try {
+      await sql`DELETE FROM brands WHERE id = ${id}`;
+    } catch (e) {
+      console.warn('Neon brand delete warning:', e);
+    }
+  }
+  return updated;
+}
+
 // ------------------------------------------------------------------------------
 // ATTRIBUTES
 // ------------------------------------------------------------------------------

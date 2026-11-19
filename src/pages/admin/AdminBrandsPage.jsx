@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getBrands, saveBrand } from '../../services/dataService';
-import { Shield, Plus, Edit } from 'lucide-react';
+import { getBrands, saveBrand, deleteBrand } from '../../services/dataService';
+import { Shield, Plus, Edit, Trash2 } from 'lucide-react';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 export default function AdminBrandsPage() {
   const [brands, setBrands] = useState([]);
   const [name, setName] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = async () => {
     const list = await getBrands();
@@ -20,6 +22,13 @@ export default function AdminBrandsPage() {
     if (!name.trim()) return;
     await saveBrand({ name: name.trim() });
     setName('');
+    load();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteBrand(deleteTarget.id);
+    setDeleteTarget(null);
     load();
   };
 
@@ -56,12 +65,32 @@ export default function AdminBrandsPage() {
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">
                 {b.name[0]}
               </div>
-              <span className="font-bold text-sm text-white">{b.name}</span>
+              <div>
+                <span className="font-bold text-sm text-white block">{b.name}</span>
+                <span className="text-[10px] text-slate-500 font-mono">/{b.slug}</span>
+              </div>
             </div>
-            <span className="text-[10px] text-slate-500 font-mono">/{b.slug}</span>
+            <button
+              onClick={() => setDeleteTarget(b)}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-900 transition-colors"
+              title="Delete Brand"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
         ))}
       </div>
+
+      {/* Confirmation Modal for Brand Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Brand?"
+        message="Are you sure you want to delete this manufacturer? Products linked to this brand may need their brand association updated."
+        itemName={deleteTarget?.name}
+        confirmText="Delete Brand"
+      />
     </div>
   );
 }
