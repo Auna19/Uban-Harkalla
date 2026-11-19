@@ -12,8 +12,8 @@ export default function FeaturedProducts({ products, categories }) {
     selectedCategory === 'all'
       ? featured
       : featured.filter(
-          (p) => p.category_id === selectedCategory || p.category_name?.toLowerCase() === selectedCategory.toLowerCase()
-        );
+        (p) => p.category_id === selectedCategory || p.category_name?.toLowerCase() === selectedCategory.toLowerCase()
+      );
 
   return (
     <section className="py-20 sm:py-24 bg-gradient-to-b from-slate-50 via-white to-slate-50 relative overflow-hidden">
@@ -22,7 +22,7 @@ export default function FeaturedProducts({ products, categories }) {
       <div className="absolute bottom-10 left-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
         <ScrollReveal direction="up" duration={500}>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
@@ -54,11 +54,10 @@ export default function FeaturedProducts({ products, categories }) {
           <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 ${
-                selectedCategory === 'all'
-                  ? 'bg-slate-950 text-white shadow-md shadow-slate-950/20'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 ${selectedCategory === 'all'
+                ? 'bg-slate-950 text-white shadow-md shadow-slate-950/20'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                }`}
             >
               All Featured ({featured.length})
             </button>
@@ -68,11 +67,10 @@ export default function FeaturedProducts({ products, categories }) {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 ${
-                    selectedCategory === cat.id
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                      : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                  }`}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 ${selectedCategory === cat.id
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                    }`}
                 >
                   {cat.name} {count > 0 && `(${count})`}
                 </button>

@@ -62,11 +62,10 @@ export default function AdminTestimonialsPage() {
         {list.map((item) => (
           <div
             key={item.id}
-            className={`p-6 rounded-3xl border flex flex-col justify-between space-y-4 ${
-              item.is_approved
+            className={`p-6 rounded-3xl border flex flex-col justify-between space-y-4 ${item.is_approved
                 ? 'bg-slate-950 border-slate-800'
                 : 'bg-amber-950/20 border-amber-800/60'
-            }`}
+              }`}
           >
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -76,11 +75,10 @@ export default function AdminTestimonialsPage() {
                   ))}
                 </div>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    item.is_approved
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.is_approved
                       ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
                       : 'bg-amber-950 text-amber-400 border border-amber-800'
-                  }`}
+                    }`}
                 >
                   {item.is_approved ? 'Approved' : 'Pending Review'}
                 </span>
@@ -100,11 +98,10 @@ export default function AdminTestimonialsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleToggleApproval(item)}
-                  className={`text-[11px] font-bold px-2 py-1 rounded-lg ${
-                    item.is_approved
+                  className={`text-[11px] font-bold px-2 py-1 rounded-lg ${item.is_approved
                       ? 'bg-slate-900 text-slate-400 hover:text-white'
                       : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                  }`}
+                    }`}
                 >
                   {item.is_approved ? 'Unpublish' : 'Approve'}
                 </button>

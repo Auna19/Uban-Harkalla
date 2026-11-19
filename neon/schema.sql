@@ -229,3 +229,11 @@ VALUES
     ('Smart Gadgets & Audio', 'smart-gadgets', 'High-fidelity audio, smart earbuds, and wireless technology.', '/1001102635.jpg', 3),
     ('Power & Accessories', 'accessories', 'Original high-speed chargers, cables, and high-capacity power banks.', '/1001102636.jpg', 4)
 ON CONFLICT (name) DO NOTHING;
+
+-- Default Administrator
+INSERT INTO public.users (id, full_name, email, phone_number, password_hash, role)
+VALUES
+    ('00000000-0000-0000-0000-000000000001', 'UBAN HARKALLA Super Admin', 'admin@ubanharkalla.com', '+2348123456789', 'admin123', 'super_admin')
+ON CONFLICT (email) DO UPDATE SET
+    role = 'super_admin',
+    password_hash = EXCLUDED.password_hash;

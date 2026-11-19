@@ -117,14 +117,15 @@ export function AuthProvider({ children }) {
 
   // Login
   const login = useCallback(async ({ email, password }) => {
-    if (!email || !password) throw new Error('Please enter both email and password.');
+    const cleanEmail = email?.trim().toLowerCase();
+    if (!cleanEmail || !password) throw new Error('Please enter both email and password.');
 
     if (isNeonConfigured && sql) {
       try {
         const rows = await sql`
           SELECT id, full_name, email, phone_number, role, created_at
           FROM users
-          WHERE email = ${email.toLowerCase()} AND password_hash = ${password}
+          WHERE LOWER(TRIM(email)) = ${cleanEmail} AND password_hash = ${password}
         `;
         if (rows && rows.length > 0) {
           const userFound = rows[0];
@@ -141,7 +142,7 @@ export function AuthProvider({ children }) {
 
     const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
     const matched = registered.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      (u) => u.email.trim().toLowerCase() === cleanEmail && u.password === password
     );
     if (!matched) {
       throw new Error('Invalid email or password. Please try again.');
@@ -155,6 +156,13 @@ export function AuthProvider({ children }) {
     return true;
   }, [triggerAuthWelcomePlayback]);
 
+  // Logout (MUST NOT TRIGGER AUDIO)
+  const logout = useCallback(async () => {
+    localStorage.removeItem(AUTH_USER_KEY);
+    setUser(null);
+    setProfile(null);
+  }, []);
+
   // Admin Dedicated Login
   const adminLogin = useCallback(async ({ email, password }) => {
     await login({ email, password });
@@ -165,14 +173,7 @@ export function AuthProvider({ children }) {
       throw new Error('Access denied: You do not have administrative privileges.');
     }
     return true;
-  }, [login]);
-
-  // Logout (MUST NOT TRIGGER AUDIO)
-  const logout = useCallback(async () => {
-    localStorage.removeItem(AUTH_USER_KEY);
-    setUser(null);
-    setProfile(null);
-  }, []);
+  }, [login, logout]);
 
   // Update Profile
   const updateProfile = useCallback(async (updates) => {
