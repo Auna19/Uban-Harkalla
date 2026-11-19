@@ -54,7 +54,7 @@ export default function HowItWorksSection() {
       <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Section Header */}
         <ScrollReveal direction="up" duration={500}>
           <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
@@ -84,9 +84,8 @@ export default function HowItWorksSection() {
                 className={isLast ? 'md:col-span-2 lg:col-span-2' : ''}
               >
                 <div
-                  className={`h-full p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800/90 shadow-xl transition-all duration-300 flex flex-col justify-between group ${
-                    isLast ? 'bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border-emerald-500/30' : ''
-                  }`}
+                  className={`h-full p-6 sm:p-7 rounded-3xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800/90 shadow-xl transition-all duration-300 flex flex-col justify-between group ${isLast ? 'bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border-emerald-500/30' : ''
+                    }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-5">

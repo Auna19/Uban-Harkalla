@@ -205,7 +205,7 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50/70 py-8 pb-24 md:pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Breadcrumb Navigation */}
         <div className="mb-6 flex items-center justify-between">
           <button
@@ -230,7 +230,7 @@ export default function ProductDetailPage() {
         {/* Product Details Main Card */}
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10 mb-14">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
-            
+
             {/* Left: Image Gallery */}
             <div className="lg:col-span-6 space-y-4">
               <TiltCard maxTilt={5} glare={true} className="rounded-3xl shadow-sm">
@@ -261,11 +261,10 @@ export default function ProductDetailPage() {
                     <button
                       key={idx}
                       onClick={() => setActiveImage(img)}
-                      className={`w-18 h-18 rounded-2xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer p-1 bg-white ${
-                        activeImage === img
-                          ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/20 scale-105'
-                          : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100'
-                      }`}
+                      className={`w-18 h-18 rounded-2xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer p-1 bg-white ${activeImage === img
+                        ? 'border-emerald-600 shadow-md ring-2 ring-emerald-500/20 scale-105'
+                        : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100'
+                        }`}
                     >
                       <img src={img} alt="" className="w-full h-full object-contain rounded-xl" />
                     </button>
@@ -276,7 +275,7 @@ export default function ProductDetailPage() {
 
             {/* Right: Info, Dynamic Variations & Checkout Action */}
             <div className="lg:col-span-6 space-y-6">
-              
+
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-black uppercase tracking-wider border border-emerald-200/60">
@@ -342,11 +341,10 @@ export default function ProductDetailPage() {
                               <button
                                 key={v}
                                 onClick={() => handleAttributeSelect(attrKey, v)}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${
-                                  isSelected
-                                    ? 'bg-slate-950 text-white border-slate-950 shadow-md ring-2 ring-slate-900/10'
-                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                                }`}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5 ${isSelected
+                                  ? 'bg-slate-950 text-white border-slate-950 shadow-md ring-2 ring-slate-900/10'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                                  }`}
                               >
                                 {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                                 <span>{v}</span>
@@ -382,7 +380,7 @@ export default function ProductDetailPage() {
 
               {/* Quantity Selector and Add to Cart Button */}
               <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-4">
-                
+
                 {/* Quantity */}
                 <div className="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 w-full sm:w-auto justify-between">
                   <button
@@ -406,13 +404,12 @@ export default function ProductDetailPage() {
                 <button
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className={`flex-1 w-full py-4 rounded-xl font-black text-sm shadow-lg transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99] ${
-                    isOutOfStock
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                      : addedSuccess
+                  className={`flex-1 w-full py-4 rounded-xl font-black text-sm shadow-lg transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99] ${isOutOfStock
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                    : addedSuccess
                       ? 'bg-emerald-700 text-white shadow-emerald-700/30'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:shadow-xl'
-                  }`}
+                    }`}
                 >
                   <ShoppingBag className="w-5 h-5" />
                   <span>
@@ -451,11 +448,10 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-4 border-b border-slate-200 pb-4 mb-8">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${
-                  activeTab === 'overview'
-                    ? 'text-emerald-700'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
+                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${activeTab === 'overview'
+                  ? 'text-emerald-700'
+                  : 'text-slate-400 hover:text-slate-600'
+                  }`}
               >
                 Product Overview & Features
                 {activeTab === 'overview' && (
@@ -464,11 +460,10 @@ export default function ProductDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('specs')}
-                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${
-                  activeTab === 'specs'
-                    ? 'text-emerald-700'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
+                className={`text-sm sm:text-base font-black transition-all cursor-pointer pb-1 relative ${activeTab === 'specs'
+                  ? 'text-emerald-700'
+                  : 'text-slate-400 hover:text-slate-600'
+                  }`}
               >
                 Detailed Specifications ({product.specifications?.length || 0})
                 {activeTab === 'specs' && (
@@ -561,13 +556,12 @@ export default function ProductDetailPage() {
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
-          className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md ${
-            isOutOfStock
-              ? 'bg-slate-200 text-slate-400'
-              : addedSuccess
+          className={`px-5 py-3 rounded-xl font-bold text-xs flex items-center gap-2 shadow-md ${isOutOfStock
+            ? 'bg-slate-200 text-slate-400'
+            : addedSuccess
               ? 'bg-emerald-700 text-white'
               : 'bg-emerald-600 text-white'
-          }`}
+            }`}
         >
           <ShoppingBag className="w-4 h-4" />
           <span>{addedSuccess ? 'Added!' : isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>

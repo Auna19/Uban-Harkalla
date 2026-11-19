@@ -1,18 +1,105 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Truck, Sparkles, CheckCircle2, Search, Smartphone, Headphones, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  ShieldCheck,
+  Truck,
+  Sparkles,
+  CheckCircle2,
+  Search,
+  Smartphone,
+  Headphones,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import ScrollReveal from '../common/ScrollReveal';
 import TiltCard from '../common/TiltCard';
+
+const FLAGSHIP_SLIDES = [
+  {
+    image: '/1001102628.jpg',
+    model: 'iPhone 15 Pro Max',
+    tag: 'Apple iOS Flagship',
+    slug: 'apple-iphone-15-pro-max',
+  },
+  {
+    image: '/1001102629.jpg',
+    model: 'Samsung Galaxy S24 Ultra',
+    tag: 'Galaxy AI Flagship',
+    slug: 'samsung-galaxy-s24-ultra-5g',
+  },
+  {
+    image: '/1001102630.jpg',
+    model: 'Apple iPhone 14 Pro',
+    tag: 'Pro Camera Series',
+    slug: 'apple-iphone-14-pro',
+  },
+  {
+    image: '/1001102632.jpg',
+    model: 'Google Pixel 8 Pro',
+    tag: 'Google AI Flagship',
+    slug: 'google-pixel-8-pro',
+  },
+  {
+    image: '/1001102635.jpg',
+    model: 'Apple AirPods Pro 2',
+    tag: 'Certified Audio & Accessories',
+    slug: 'apple-airpods-pro-2-usb-c',
+  },
+];
 
 export default function HeroSection({ content }) {
   const navigate = useNavigate();
   const [heroSearch, setHeroSearch] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   const headline =
     content?.headline || 'Your Trusted Destination for Premium Smartphones and Gadgets.';
   const subtext =
     content?.subtext ||
     'Discover quality smartphones, essential gadgets, and accessories at competitive prices. Shop with confidence and enjoy a convenient shopping experience with UBAN HARKALLA.';
+
+  // Automatic slide progression every 3.8 seconds
+  useEffect(() => {
+    if (isHovered) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % FLAGSHIP_SLIDES.length);
+    }, 3800);
+    return () => clearInterval(interval);
+  }, [isHovered]);
+
+  const handlePrevSlide = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCurrentSlide((prev) => (prev - 1 + FLAGSHIP_SLIDES.length) % FLAGSHIP_SLIDES.length);
+  };
+
+  const handleNextSlide = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCurrentSlide((prev) => (prev + 1) % FLAGSHIP_SLIDES.length);
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (diff > 45) {
+      // Swiped left -> next
+      setCurrentSlide((prev) => (prev + 1) % FLAGSHIP_SLIDES.length);
+    } else if (diff < -45) {
+      // Swiped right -> prev
+      setCurrentSlide((prev) => (prev - 1 + FLAGSHIP_SLIDES.length) % FLAGSHIP_SLIDES.length);
+    }
+    setTouchStartX(null);
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -146,32 +233,93 @@ export default function HeroSection({ content }) {
                 {/* Ambient dynamic back-glow behind device card */}
                 <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 via-teal-500/10 to-amber-500/20 rounded-3xl blur-2xl opacity-75 animate-pulse-glow" />
 
-                {/* Main 3D Tilt Showcase Card */}
-                <TiltCard maxTilt={8} scale={1.02} className="rounded-3xl overflow-hidden border border-slate-700/80 bg-slate-900/90 shadow-2xl backdrop-blur-md group">
-                  <div className="relative overflow-hidden h-84 sm:h-96">
-                    <img
-                      src="/1001102628.jpg"
-                      alt="Premium Apple iPhones and Gadgets"
-                      className="w-full h-full object-cover object-center animate-ken-burns group-hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
+                {/* Main 3D Tilt Showcase Card with Image Slider */}
+                <TiltCard maxTilt={6} scale={1.01} className="rounded-3xl overflow-hidden border border-slate-700/80 bg-slate-900/90 shadow-2xl backdrop-blur-md group">
+                  <div
+                    className="relative overflow-hidden h-84 sm:h-96 select-none"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    {/* Horizontal Slide Track */}
+                    <div
+                      className="flex h-full w-full transition-transform duration-700 ease-out will-change-transform"
+                      style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                    >
+                      {FLAGSHIP_SLIDES.map((slide, idx) => (
+                        <div key={idx} className="relative w-full h-full shrink-0 overflow-hidden">
+                          <img
+                            src={slide.image}
+                            alt={slide.model}
+                            className={`w-full h-full object-cover object-center transition-transform duration-1000 ${
+                              currentSlide === idx ? 'scale-105' : 'scale-100'
+                            }`}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Manual Navigation Chevrons */}
+                    <button
+                      type="button"
+                      onClick={handlePrevSlide}
+                      aria-label="Previous flagship image"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-950/70 hover:bg-slate-900 border border-slate-700/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 sm:opacity-75 transition-all duration-200 z-20 backdrop-blur-md shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                    >
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-slate-200" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextSlide}
+                      aria-label="Next flagship image"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-950/70 hover:bg-slate-900 border border-slate-700/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 sm:opacity-75 transition-all duration-200 z-20 backdrop-blur-md shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                    >
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-200" />
+                    </button>
+
+                    {/* Slide Indicator Dots at top right */}
+                    <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-slate-950/75 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-slate-700/60 shadow-md">
+                      {FLAGSHIP_SLIDES.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentSlide(idx);
+                          }}
+                          aria-label={`Go to slide ${idx + 1}`}
+                          className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                            currentSlide === idx
+                              ? 'w-5 bg-emerald-400'
+                              : 'w-1.5 bg-slate-600 hover:bg-slate-400'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                   
                   {/* Floating Overlay Card on Image */}
-                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-slate-700/80 flex items-center justify-between shadow-xl">
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-emerald-400" />
-                        Flagship Selection
-                      </span>
-                      <h3 className="font-extrabold text-white text-sm sm:text-base mt-0.5">
+                  <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-slate-700/80 flex items-center justify-between shadow-xl z-20">
+                    <div className="min-w-0 pr-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-emerald-400" />
+                          Flagship Selection
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-300 bg-slate-800/90 border border-slate-700/70 px-2 py-0.5 rounded-md truncate max-w-[150px]">
+                          {FLAGSHIP_SLIDES[currentSlide].model}
+                        </span>
+                      </div>
+                      <h3 className="font-extrabold text-white text-sm sm:text-base mt-0.5 truncate">
                         Apple iPhones & Androids
                       </h3>
                       <p className="text-xs text-slate-400">Brand New & Certified Pre-Owned</p>
                     </div>
                     <Link
-                      to="/shop"
-                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs transition-colors shrink-0 shadow-md active:scale-95"
+                      to={`/shop?search=${encodeURIComponent(FLAGSHIP_SLIDES[currentSlide].model)}`}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-colors shrink-0 shadow-md active:scale-95"
                     >
                       Explore
                     </Link>

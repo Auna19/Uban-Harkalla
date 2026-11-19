@@ -16,7 +16,7 @@ export default function DeliveryInfoSection({ locations, pickupContent }) {
   return (
     <section className="py-20 sm:py-28 bg-slate-50/80 border-t border-slate-200/80 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+
         {/* Header */}
         <ScrollReveal direction="up" duration={500}>
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -33,7 +33,7 @@ export default function DeliveryInfoSection({ locations, pickupContent }) {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Delivery Charges Table (Dynamic from backend) */}
           <div className="lg:col-span-7">
             <ScrollReveal direction="right" duration={600}>

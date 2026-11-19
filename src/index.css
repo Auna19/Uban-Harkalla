@@ -18,28 +18,36 @@
   0% {
     transform: scale(1) translate(0, 0);
   }
+
   50% {
     transform: scale(1.06) translate(-1%, -1%);
   }
+
   100% {
     transform: scale(1) translate(0, 0);
   }
 }
 
 @keyframes floatGentle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-6px);
   }
 }
 
 @keyframes pulseGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.8;
     transform: scale(1.08);
@@ -50,6 +58,7 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -60,6 +69,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -71,6 +81,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -82,6 +93,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -131,6 +143,7 @@
 
 /* Accessibility: Support prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   ::before,
   ::after {
@@ -139,6 +152,7 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
   .animate-ken-burns,
   .animate-float,
   .animate-pulse-glow {
