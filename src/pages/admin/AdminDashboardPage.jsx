@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAnalytics, getOrders, getProducts } from '../../services/dataService';
 import {
-  DollarSign,
+  Wallet,
   Package,
   Clock,
   CheckCircle2,
@@ -84,7 +84,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
-            <DollarSign className="w-6 h-6" />
+            <span className="text-xl font-black text-emerald-400 select-none">₦</span>
           </div>
         </div>
 

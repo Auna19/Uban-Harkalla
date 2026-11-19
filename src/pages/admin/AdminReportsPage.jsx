@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAnalytics, getOrders, getProducts } from '../../services/dataService';
-import { BarChart3, Download, Calendar, DollarSign, Package, TrendingUp } from 'lucide-react';
+import { BarChart3, Download, Calendar, Package, TrendingUp } from 'lucide-react';
 
 export default function AdminReportsPage() {
   const [analytics, setAnalytics] = useState(null);
