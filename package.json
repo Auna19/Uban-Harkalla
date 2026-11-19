@@ -10,8 +10,8 @@
     "postinstall": "node scripts/patch-rollup.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.1",
     "@rollup/wasm-node": "^4.68.7",
-    "@supabase/supabase-js": "^2.48.1",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",

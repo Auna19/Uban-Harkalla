@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
+import { sql, isNeonConfigured } from '../services/neonClient';
 import { useAudio } from './AudioContext';
 
 const AuthContext = createContext(null);
@@ -38,33 +38,15 @@ export function AuthProvider({ children }) {
   // Load existing session on initial mount
   useEffect(() => {
     async function initAuth() {
-      if (isSupabaseConfigured) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            setUser(session.user);
-            const { data: prof } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            setProfile(prof || null);
-          }
-        } catch (err) {
-          console.warn('Supabase auth session error:', err);
+      try {
+        const stored = localStorage.getItem(AUTH_USER_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setUser(parsed);
+          setProfile(parsed);
         }
-      } else {
-        // Load from local storage
-        try {
-          const stored = localStorage.getItem(AUTH_USER_KEY);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            setUser(parsed);
-            setProfile(parsed);
-          }
-        } catch (e) {
-          console.error(e);
-        }
+      } catch (e) {
+        console.error(e);
       }
       setLoading(false);
     }
@@ -80,51 +62,53 @@ export function AuthProvider({ children }) {
     if (!phone || phone.length < 10) throw new Error('Valid Nigerian phone number is required.');
     if (!password || password.length < 6) throw new Error('Password must be at least 6 characters.');
 
-    if (isSupabaseConfigured) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName, phone_number: phone },
-        },
-      });
-      if (error) throw error;
-      if (data?.user) {
-        // Create profile in database
-        await supabase.from('profiles').insert({
-          id: data.user.id,
-          full_name: fullName,
-          email,
-          phone_number: phone,
-          role: 'customer',
-        });
-        setUser(data.user);
-        setProfile({ id: data.user.id, full_name: fullName, email, phone_number: phone, role: 'customer' });
+    if (isNeonConfigured && sql) {
+      try {
+        const existing = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()}`;
+        if (existing && existing.length > 0) {
+          throw new Error('An account with this email address already exists. Please login.');
+        }
+        const createdUsers = await sql`
+          INSERT INTO users (full_name, email, phone_number, password_hash, role)
+          VALUES (${fullName}, ${email.toLowerCase()}, ${phone}, ${password}, 'customer')
+          RETURNING id, full_name, email, phone_number, role, created_at
+        `;
+        if (createdUsers && createdUsers.length > 0) {
+          const created = createdUsers[0];
+          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(created));
+          setUser(created);
+          setProfile(created);
+          triggerAuthWelcomePlayback(`signup-${Date.now()}`);
+          return true;
+        }
+      } catch (err) {
+        if (err.message?.includes('already exists')) throw err;
+        console.warn('Neon signup warning, using local mode:', err);
       }
-    } else {
-      // Local fallback
-      const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
-      const existing = registered.find((u) => u.email.toLowerCase() === email.toLowerCase());
-      if (existing) {
-        throw new Error('An account with this email address already exists. Please login.');
-      }
-
-      const newUser = {
-        id: `user-${Date.now()}`,
-        email: email.toLowerCase(),
-        password,
-        full_name: fullName,
-        phone_number: phone,
-        role: 'customer',
-        created_at: new Date().toISOString(),
-      };
-      registered.push(newUser);
-      localStorage.setItem(USERS_DB_KEY, JSON.stringify(registered));
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newUser));
-
-      setUser(newUser);
-      setProfile(newUser);
     }
+
+    // Local fallback
+    const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
+    const existing = registered.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+      throw new Error('An account with this email address already exists. Please login.');
+    }
+
+    const newUser = {
+      id: `user-${Date.now()}`,
+      email: email.toLowerCase(),
+      password,
+      full_name: fullName,
+      phone_number: phone,
+      role: 'customer',
+      created_at: new Date().toISOString(),
+    };
+    registered.push(newUser);
+    localStorage.setItem(USERS_DB_KEY, JSON.stringify(registered));
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newUser));
+
+    setUser(newUser);
+    setProfile(newUser);
 
     // Trigger one-time brand audio welcome on successful sign-up
     triggerAuthWelcomePlayback(`signup-${Date.now()}`);
@@ -135,33 +119,36 @@ export function AuthProvider({ children }) {
   const login = useCallback(async ({ email, password }) => {
     if (!email || !password) throw new Error('Please enter both email and password.');
 
-    if (isSupabaseConfigured) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      if (data?.user) {
-        setUser(data.user);
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-        setProfile(prof || null);
+    if (isNeonConfigured && sql) {
+      try {
+        const rows = await sql`
+          SELECT id, full_name, email, phone_number, role, created_at
+          FROM users
+          WHERE email = ${email.toLowerCase()} AND password_hash = ${password}
+        `;
+        if (rows && rows.length > 0) {
+          const userFound = rows[0];
+          localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userFound));
+          setUser(userFound);
+          setProfile(userFound);
+          triggerAuthWelcomePlayback(`login-${Date.now()}`);
+          return true;
+        }
+      } catch (err) {
+        console.warn('Neon login warning, using local mode:', err);
       }
-    } else {
-      const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
-      const matched = registered.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
-      if (!matched) {
-        throw new Error('Invalid email or password. Please try again.');
-      }
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(matched));
-      setUser(matched);
-      setProfile(matched);
     }
+
+    const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
+    const matched = registered.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+    );
+    if (!matched) {
+      throw new Error('Invalid email or password. Please try again.');
+    }
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(matched));
+    setUser(matched);
+    setProfile(matched);
 
     // Trigger one-time brand audio welcome on successful login
     triggerAuthWelcomePlayback(`login-${Date.now()}`);
@@ -182,13 +169,6 @@ export function AuthProvider({ children }) {
 
   // Logout (MUST NOT TRIGGER AUDIO)
   const logout = useCallback(async () => {
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.auth.signOut();
-      } catch (err) {
-        console.warn('Signout warning:', err);
-      }
-    }
     localStorage.removeItem(AUTH_USER_KEY);
     setUser(null);
     setProfile(null);
@@ -200,16 +180,25 @@ export function AuthProvider({ children }) {
 
     const updated = { ...profile, ...updates };
     setProfile(updated);
-    if (!isSupabaseConfigured) {
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updated));
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updated));
+
+    if (isNeonConfigured && sql) {
+      try {
+        await sql`
+          UPDATE users
+          SET full_name = ${updated.full_name || ''}, phone_number = ${updated.phone_number || ''}, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${user.id}
+        `;
+      } catch (err) {
+        console.warn('Neon update profile warning:', err);
+      }
+    } else {
       const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
       const idx = registered.findIndex((u) => u.id === user.id);
       if (idx !== -1) {
         registered[idx] = { ...registered[idx], ...updates };
         localStorage.setItem(USERS_DB_KEY, JSON.stringify(registered));
       }
-    } else {
-      await supabase.from('profiles').update(updates).eq('id', user.id);
     }
     return updated;
   }, [user, profile]);
@@ -218,10 +207,6 @@ export function AuthProvider({ children }) {
   const requestPasswordReset = useCallback(async (email) => {
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       throw new Error('Please enter a valid email address.');
-    }
-    if (isSupabaseConfigured) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
     }
     return true;
   }, []);

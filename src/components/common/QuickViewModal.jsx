@@ -160,7 +160,7 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
                 {product.category_name}
               </span>
             </div>
-            
+
             <h3 className="text-xl font-black text-slate-950 mt-1 tracking-tight leading-snug">
               {product.name}
             </h3>
@@ -203,11 +203,10 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
                             key={v}
                             type="button"
                             onClick={() => handleSelectAttribute(attrKey, v)}
-                            className={`px-3 py-1.5 text-xs rounded-xl font-bold border transition-all cursor-pointer flex items-center gap-1 ${
-                              isSelected
+                            className={`px-3 py-1.5 text-xs rounded-xl font-bold border transition-all cursor-pointer flex items-center gap-1 ${isSelected
                                 ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
                                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
                             {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
                             <span>{v}</span>
@@ -258,13 +257,12 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
               type="button"
               onClick={handleAddToCart}
               disabled={stock <= 0}
-              className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
-                added
+              className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${added
                   ? 'bg-emerald-700 text-white shadow-emerald-700/30'
                   : stock > 0
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:shadow-lg'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-              }`}
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:shadow-lg'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                }`}
             >
               {added ? (
                 <>

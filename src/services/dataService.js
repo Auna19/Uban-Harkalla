@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient.js';
+import { sql, isNeonConfigured } from './neonClient.js';
 import {
   INITIAL_CATEGORIES,
   INITIAL_BRANDS,
@@ -54,12 +54,13 @@ function saveStoredData(key, data) {
 // CATEGORIES
 // ------------------------------------------------------------------------------
 export async function getCategories() {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('display_order', { ascending: true });
-    if (!error && data?.length) return data;
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`SELECT * FROM categories WHERE is_active = true ORDER BY display_order ASC`;
+      if (rows && rows.length > 0) return rows;
+    } catch (e) {
+      console.warn('Neon categories query warning:', e);
+    }
   }
   return getStoredData(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
 }
@@ -81,11 +82,20 @@ export async function saveCategory(category) {
   }
   saveStoredData(STORAGE_KEYS.CATEGORIES, updated);
 
-  if (isSupabaseConfigured) {
+  if (isNeonConfigured && sql) {
     try {
-      await supabase.from('categories').upsert(category);
+      await sql`
+        INSERT INTO categories (name, slug, description, image_url, is_active, display_order)
+        VALUES (${category.name}, ${category.slug}, ${category.description || ''}, ${category.image_url || ''}, ${category.is_active ?? true}, ${category.display_order || 0})
+        ON CONFLICT (slug) DO UPDATE SET
+          name = EXCLUDED.name,
+          description = EXCLUDED.description,
+          image_url = EXCLUDED.image_url,
+          is_active = EXCLUDED.is_active,
+          display_order = EXCLUDED.display_order
+      `;
     } catch (e) {
-      console.warn('Supabase category upsert warning:', e);
+      console.warn('Neon category upsert warning:', e);
     }
   }
   return updated;
@@ -96,11 +106,11 @@ export async function deleteCategory(id) {
   const updated = current.filter((c) => c.id !== id);
   saveStoredData(STORAGE_KEYS.CATEGORIES, updated);
 
-  if (isSupabaseConfigured) {
+  if (isNeonConfigured && sql) {
     try {
-      await supabase.from('categories').delete().eq('id', id);
+      await sql`DELETE FROM categories WHERE id = ${id}`;
     } catch (e) {
-      console.warn('Supabase category delete warning:', e);
+      console.warn('Neon category delete warning:', e);
     }
   }
   return updated;
@@ -110,9 +120,13 @@ export async function deleteCategory(id) {
 // BRANDS
 // ------------------------------------------------------------------------------
 export async function getBrands() {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.from('brands').select('*').order('name');
-    if (!error && data?.length) return data;
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`SELECT * FROM brands WHERE is_active = true ORDER BY display_order ASC, name ASC`;
+      if (rows && rows.length > 0) return rows;
+    } catch (e) {
+      console.warn('Neon brands query warning:', e);
+    }
   }
   return getStoredData(STORAGE_KEYS.BRANDS, INITIAL_BRANDS);
 }
@@ -257,11 +271,24 @@ export async function saveProduct(product) {
   }
   saveStoredData(STORAGE_KEYS.PRODUCTS, updated);
 
-  if (isSupabaseConfigured) {
+  if (isNeonConfigured && sql) {
     try {
-      await supabase.from('products').upsert(product);
+      await sql`
+        INSERT INTO products (name, slug, base_price, discounted_price, short_description, description, stock_quantity, is_featured, is_active)
+        VALUES (${product.name}, ${product.slug}, ${product.base_price || 0}, ${product.discounted_price || null}, ${product.short_description || ''}, ${product.description || ''}, ${product.stock_quantity || 0}, ${product.is_featured || false}, ${product.is_active ?? true})
+        ON CONFLICT (slug) DO UPDATE SET
+          name = EXCLUDED.name,
+          base_price = EXCLUDED.base_price,
+          discounted_price = EXCLUDED.discounted_price,
+          short_description = EXCLUDED.short_description,
+          description = EXCLUDED.description,
+          stock_quantity = EXCLUDED.stock_quantity,
+          is_featured = EXCLUDED.is_featured,
+          is_active = EXCLUDED.is_active,
+          updated_at = CURRENT_TIMESTAMP
+      `;
     } catch (e) {
-      console.warn('Supabase product save warning:', e);
+      console.warn('Neon product save warning:', e);
     }
   }
   return updated;
@@ -272,11 +299,11 @@ export async function deleteProduct(id) {
   const updated = current.filter((p) => p.id !== id);
   saveStoredData(STORAGE_KEYS.PRODUCTS, updated);
 
-  if (isSupabaseConfigured) {
+  if (isNeonConfigured && sql) {
     try {
-      await supabase.from('products').delete().eq('id', id);
+      await sql`DELETE FROM products WHERE id = ${id}`;
     } catch (e) {
-      console.warn('Supabase product delete warning:', e);
+      console.warn('Neon product delete warning:', e);
     }
   }
   return updated;
@@ -286,9 +313,13 @@ export async function deleteProduct(id) {
 // DELIVERY LOCATIONS
 // ------------------------------------------------------------------------------
 export async function getDeliveryLocations() {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.from('delivery_locations').select('*').order('fee');
-    if (!error && data?.length) return data;
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`SELECT * FROM delivery_locations WHERE is_active = true ORDER BY display_order ASC, fee ASC`;
+      if (rows && rows.length > 0) return rows;
+    } catch (e) {
+      console.warn('Neon delivery locations query warning:', e);
+    }
   }
   return getStoredData(STORAGE_KEYS.DELIVERY_LOCATIONS, INITIAL_DELIVERY_LOCATIONS);
 }
