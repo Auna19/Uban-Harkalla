@@ -17,10 +17,8 @@ import {
   Phone,
   MapPin,
   CreditCard,
-  ChevronRight,
   TrendingUp,
   AlertCircle,
-  ChevronLeft,
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
@@ -219,13 +217,6 @@ export default function AdminOrdersPage() {
     setSortBy('newest');
   };
 
-  const scrollTabs = (direction) => {
-    if (tabsContainerRef.current) {
-      const offset = direction === 'left' ? -200 : 200;
-      tabsContainerRef.current.scrollBy({ left: offset, behavior: 'smooth' });
-    }
-  };
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       
@@ -300,31 +291,12 @@ export default function AdminOrdersPage() {
       {/* 3. Redesigned Filter Segment & Control Center */}
       <div className="bg-slate-950 p-4 sm:p-5 rounded-3xl border border-slate-800 space-y-4 shadow-sm">
         
-        {/* Status Pill Filters with Horizontal Scroll Cues */}
+        {/* Status Pill Filters with Clean Horizontal Scroll */}
         <div className="relative">
-          {/* Scroll hint buttons for desktop / tablet */}
-          <button
-            type="button"
-            onClick={() => scrollTabs('left')}
-            className="hidden sm:flex absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-slate-900 border border-slate-700 text-slate-300 hover:text-white rounded-full items-center justify-center shadow-lg cursor-pointer"
-            title="Scroll left"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => scrollTabs('right')}
-            className="hidden sm:flex absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-slate-900 border border-slate-700 text-slate-300 hover:text-white rounded-full items-center justify-center shadow-lg cursor-pointer"
-            title="Scroll right"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-
           {/* Swipeable Track */}
           <div
             ref={tabsContainerRef}
-            className="flex items-center gap-2 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none snap-x touch-pan-x"
+            className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none snap-x touch-pan-x"
           >
             {filterTabs.map((tab) => {
               const Icon = tab.icon;
