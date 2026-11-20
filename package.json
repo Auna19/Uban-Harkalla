@@ -22,7 +22,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "postinstall": "node scripts/patch-rollup.js"
+    "postinstall": "node scripts/patch-rollup.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@neon/config": "^1.14.4",
@@ -38,6 +40,7 @@
     "recharts": "^2.15.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
