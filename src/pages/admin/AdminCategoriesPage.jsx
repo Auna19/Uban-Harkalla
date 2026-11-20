@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { getCategories, saveCategory, deleteCategory } from '../../services/dataService';
-import { Layers, Plus, Edit, Trash2, CheckCircle2, Save, X } from 'lucide-react';
+import { Layers, Plus, Edit, Trash2, CheckCircle2, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { processLocalImage } from '../../utils/imageUpload';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [form, setForm] = useState({ name: '', slug: '', description: '', image_url: '/1001102628.jpg', is_active: true });
 
   const load = async () => {
@@ -23,6 +25,20 @@ export default function AdminCategoriesPage() {
     setEditingCat(null);
     setForm({ name: '', slug: '', description: '', image_url: '/1001102628.jpg', is_active: true });
     setShowModal(true);
+  };
+
+  const handleCategoryImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const dataUrl = await processLocalImage(file);
+      setForm((prev) => ({ ...prev, image_url: dataUrl }));
+    } catch (err) {
+      alert(err.message || 'Failed to process image');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleOpenEdit = (cat) => {
@@ -164,13 +180,41 @@ export default function AdminCategoriesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Image URL / Path</label>
-                <input
-                  type="text"
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  className="w-full text-xs rounded-xl px-3 py-2 bg-slate-900 border border-slate-700 text-white"
-                />
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                  Category Image Asset
+                </label>
+                <div className="flex items-start gap-3 p-3 bg-slate-900 border border-slate-800 rounded-2xl">
+                  {/* Thumbnail Preview */}
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-950 border border-slate-700 shrink-0 relative">
+                    <img
+                      src={form.image_url || '/1001102628.jpg'}
+                      alt="Category Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Upload Controls */}
+                  <div className="flex-1 space-y-2">
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl cursor-pointer text-xs font-bold transition-all w-fit">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{uploadingImage ? 'Processing...' : 'Upload Image from Computer'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleCategoryImageUpload}
+                        disabled={uploadingImage}
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={form.image_url}
+                      onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                      placeholder="e.g. /1001102628.jpg or data:image/..."
+                      className="w-full text-[11px] font-mono rounded-lg px-2.5 py-1.5 bg-slate-950 border border-slate-700 text-slate-300"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
