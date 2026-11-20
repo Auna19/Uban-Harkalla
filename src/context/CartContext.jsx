@@ -45,7 +45,7 @@ export function CartProvider({ children }) {
           .join(' | ')
       : '';
 
-    const image = (variation && variation.image_url) || (product.images && product.images[0]) || '/Logo.jpg';
+    const image = (variation && variation.image_url) || (product.images && product.images[0]) || product.image_url || '/Logo.jpg';
 
     setItems((prevItems) => {
       const existingIdx = prevItems.findIndex((i) => i.id === itemId);

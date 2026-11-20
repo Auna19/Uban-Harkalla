@@ -84,16 +84,30 @@ export async function saveCategory(category) {
 
   if (isNeonConfigured && sql) {
     try {
-      await sql`
-        INSERT INTO categories (name, slug, description, image_url, is_active, display_order)
-        VALUES (${category.name}, ${category.slug}, ${category.description || ''}, ${category.image_url || ''}, ${category.is_active ?? true}, ${category.display_order || 0})
-        ON CONFLICT (slug) DO UPDATE SET
-          name = EXCLUDED.name,
-          description = EXCLUDED.description,
-          image_url = EXCLUDED.image_url,
-          is_active = EXCLUDED.is_active,
-          display_order = EXCLUDED.display_order
-      `;
+      const isUuid = category.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category.id);
+      if (isUuid) {
+        await sql`
+          UPDATE categories
+          SET name = ${category.name},
+              slug = ${category.slug},
+              description = ${category.description || ''},
+              image_url = ${category.image_url || ''},
+              is_active = ${category.is_active ?? true},
+              display_order = ${category.display_order || 0}
+          WHERE id = ${category.id}
+        `;
+      } else {
+        await sql`
+          INSERT INTO categories (name, slug, description, image_url, is_active, display_order)
+          VALUES (${category.name}, ${category.slug}, ${category.description || ''}, ${category.image_url || ''}, ${category.is_active ?? true}, ${category.display_order || 0})
+          ON CONFLICT (slug) DO UPDATE SET
+            name = EXCLUDED.name,
+            description = EXCLUDED.description,
+            image_url = EXCLUDED.image_url,
+            is_active = EXCLUDED.is_active,
+            display_order = EXCLUDED.display_order
+        `;
+      }
     } catch (e) {
       console.warn('Neon category upsert warning:', e);
     }
@@ -269,12 +283,19 @@ export async function getProductById(id) {
 
 export async function saveProduct(product) {
   const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+  const normalizedPrimaryImage = (product.images && product.images[0]) || product.image_url || '/1001102628.jpg';
+  const productWithImages = {
+    ...product,
+    image_url: normalizedPrimaryImage,
+    images: product.images && product.images.length > 0 ? product.images : [normalizedPrimaryImage],
+  };
+
   let updated;
   if (product.id) {
-    updated = current.map((p) => (p.id === product.id ? { ...p, ...product, updated_at: new Date().toISOString() } : p));
+    updated = current.map((p) => (p.id === product.id ? { ...p, ...productWithImages, updated_at: new Date().toISOString() } : p));
   } else {
     const newProduct = {
-      ...product,
+      ...productWithImages,
       id: `prod-${Date.now()}`,
       slug: product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       created_at: new Date().toISOString(),
@@ -288,20 +309,41 @@ export async function saveProduct(product) {
 
   if (isNeonConfigured && sql) {
     try {
-      await sql`
-        INSERT INTO products (name, slug, base_price, discounted_price, short_description, description, stock_quantity, is_featured, is_active)
-        VALUES (${product.name}, ${product.slug}, ${product.base_price || 0}, ${product.discounted_price || null}, ${product.short_description || ''}, ${product.description || ''}, ${product.stock_quantity || 0}, ${product.is_featured || false}, ${product.is_active ?? true})
-        ON CONFLICT (slug) DO UPDATE SET
-          name = EXCLUDED.name,
-          base_price = EXCLUDED.base_price,
-          discounted_price = EXCLUDED.discounted_price,
-          short_description = EXCLUDED.short_description,
-          description = EXCLUDED.description,
-          stock_quantity = EXCLUDED.stock_quantity,
-          is_featured = EXCLUDED.is_featured,
-          is_active = EXCLUDED.is_active,
-          updated_at = CURRENT_TIMESTAMP
-      `;
+      const imagesJson = JSON.stringify(productWithImages.images);
+      const isUuid = product.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.id);
+      if (isUuid) {
+        await sql`
+          UPDATE products
+          SET name = ${product.name},
+              slug = ${product.slug},
+              base_price = ${product.base_price || 0},
+              discounted_price = ${product.discounted_price || null},
+              short_description = ${product.short_description || ''},
+              description = ${product.description || ''},
+              stock_quantity = ${product.stock_quantity || 0},
+              is_featured = ${product.is_featured || false},
+              is_active = ${product.is_active ?? true},
+              images = ${imagesJson}::jsonb,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${product.id}
+        `;
+      } else {
+        await sql`
+          INSERT INTO products (name, slug, base_price, discounted_price, short_description, description, stock_quantity, is_featured, is_active, images)
+          VALUES (${product.name}, ${product.slug}, ${product.base_price || 0}, ${product.discounted_price || null}, ${product.short_description || ''}, ${product.description || ''}, ${product.stock_quantity || 0}, ${product.is_featured || false}, ${product.is_active ?? true}, ${imagesJson}::jsonb)
+          ON CONFLICT (slug) DO UPDATE SET
+            name = EXCLUDED.name,
+            base_price = EXCLUDED.base_price,
+            discounted_price = EXCLUDED.discounted_price,
+            short_description = EXCLUDED.short_description,
+            description = EXCLUDED.description,
+            stock_quantity = EXCLUDED.stock_quantity,
+            is_featured = EXCLUDED.is_featured,
+            is_active = EXCLUDED.is_active,
+            images = EXCLUDED.images,
+            updated_at = CURRENT_TIMESTAMP
+        `;
+      }
     } catch (e) {
       console.warn('Neon product save warning:', e);
     }
