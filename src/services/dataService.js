@@ -442,8 +442,11 @@ export async function saveProduct(product) {
 
   if (isNeonConfigured && sql) {
     try {
-      const imagesJson = JSON.stringify(productWithImages.images);
+      const imagesJson = JSON.stringify(productWithImages.images || [normalizedPrimaryImage]);
       const isUuid = product.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.id);
+      
+      let savedProductId = isUuid ? product.id : null;
+
       if (isUuid) {
         await sql`
           UPDATE products
@@ -461,7 +464,7 @@ export async function saveProduct(product) {
           WHERE id = ${product.id}
         `;
       } else {
-        await sql`
+        const rows = await sql`
           INSERT INTO products (name, slug, base_price, discounted_price, short_description, description, stock_quantity, is_featured, is_active, images)
           VALUES (${product.name}, ${product.slug}, ${product.base_price || 0}, ${product.discounted_price || null}, ${product.short_description || ''}, ${product.description || ''}, ${product.stock_quantity || 0}, ${product.is_featured || false}, ${product.is_active ?? true}, ${imagesJson}::jsonb)
           ON CONFLICT (slug) DO UPDATE SET
@@ -475,7 +478,39 @@ export async function saveProduct(product) {
             is_active = EXCLUDED.is_active,
             images = EXCLUDED.images,
             updated_at = CURRENT_TIMESTAMP
+          RETURNING id
         `;
+        if (rows && rows.length > 0) {
+          savedProductId = rows[0].id;
+        }
+      }
+
+      // Upsert variations if available
+      if (product.variations && product.variations.length > 0 && savedProductId) {
+        for (const v of product.variations) {
+          const vAttrs = JSON.stringify(v.attributes || {});
+          const vImg = v.has_custom_image ? v.image_url : normalizedPrimaryImage;
+          try {
+            await sql`
+              INSERT INTO product_variations (
+                product_id, sku, price, discounted_price, stock_quantity,
+                attributes, image_url, is_active
+              ) VALUES (
+                ${savedProductId}, ${v.sku}, ${v.price || product.base_price || 0}, ${v.discounted_price || null},
+                ${v.stock_quantity || 0}, ${vAttrs}::jsonb, ${vImg}, ${v.is_active !== false}
+              )
+              ON CONFLICT (sku) DO UPDATE SET
+                price = EXCLUDED.price,
+                discounted_price = EXCLUDED.discounted_price,
+                stock_quantity = EXCLUDED.stock_quantity,
+                attributes = EXCLUDED.attributes,
+                image_url = EXCLUDED.image_url,
+                is_active = EXCLUDED.is_active
+            `;
+          } catch (errVar) {
+            console.warn('Variation save notice:', errVar);
+          }
+        }
       }
     } catch (e) {
       console.warn('Neon product save warning:', e);

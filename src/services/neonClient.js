@@ -1,9 +1,12 @@
 import { neon } from '@neondatabase/serverless';
 
+const DEFAULT_NEON_DATABASE_URL =
+  'postgresql://neondb_owner:npg_EydW5L0PtfAF@ep-delicate-math-bdjxdk6q-pooler.c-8.us-east-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require';
+
 const rawUrl =
-  import.meta.env?.VITE_NEON_DATABASE_URL ||
-  import.meta.env?.VITE_DATABASE_URL ||
-  '';
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_NEON_DATABASE_URL) ||
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DATABASE_URL) ||
+  DEFAULT_NEON_DATABASE_URL;
 
 const databaseUrl = rawUrl.trim().replace(/^["']|["']$/g, '');
 
