@@ -84,7 +84,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
-            <span className="text-xl font-black text-emerald-400 select-none">₦</span>
+            <Wallet className="w-6 h-6" />
           </div>
         </div>
 
