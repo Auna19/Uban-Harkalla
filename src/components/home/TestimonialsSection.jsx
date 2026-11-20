@@ -140,7 +140,7 @@ export default function TestimonialsSection({ testimonials }) {
                       required
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="e.g. Aliyu Haruna"
+                      placeholder="e.g. Musa Abdullahi"
                       className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>

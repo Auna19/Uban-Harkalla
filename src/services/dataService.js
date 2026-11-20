@@ -825,37 +825,158 @@ export async function saveBusinessSettings(newSettings) {
 // CUSTOMERS MANAGEMENT
 // ------------------------------------------------------------------------------
 export async function getCustomers() {
-  const initialCustomers = [
-    {
-      id: 'cust-1',
-      full_name: 'Aliyu Haruna',
-      email: 'aliyu.haruna@example.com',
-      phone_number: '08031234567',
-      role: 'customer',
-      total_orders: 1,
-      total_spent: 1580000,
-      is_active: true,
-      created_at: '2026-11-10T12:00:00Z',
-    },
-    {
-      id: 'cust-2',
-      full_name: 'Fatima Bello',
-      email: 'fatima.bello@example.com',
-      phone_number: '08129876543',
-      role: 'customer',
-      total_orders: 2,
-      total_spent: 1390000,
-      is_active: true,
-      created_at: '2026-11-12T09:30:00Z',
-    },
-  ];
-  return getStoredData(STORAGE_KEYS.CUSTOMERS, initialCustomers);
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`
+        SELECT u.id, u.full_name, u.email, u.phone_number, u.role, COALESCE(u.is_active, true) as is_active, u.created_at,
+               COUNT(o.id)::int as total_orders,
+               COALESCE(SUM(o.total_amount), 0)::numeric as total_spent
+        FROM users u
+        LEFT JOIN orders o ON (o.user_id::text = u.id::text OR LOWER(TRIM(o.customer_email)) = LOWER(TRIM(u.email)))
+        WHERE u.role = 'customer' OR u.role IS NULL
+        GROUP BY u.id, u.full_name, u.email, u.phone_number, u.role, u.is_active, u.created_at
+        ORDER BY u.created_at DESC
+      `;
+      if (rows) {
+        // Strip out any stale dummy user accounts
+        const sanitized = rows
+          .filter(
+            (c) =>
+              c.email !== 'aliyu.haruna@example.com' &&
+              c.email !== 'fatima.bello@example.com' &&
+              c.id !== 'cust-1' &&
+              c.id !== 'cust-2'
+          )
+          .map((c) => ({
+            id: c.id,
+            full_name: c.full_name || 'Customer',
+            email: c.email,
+            phone_number: c.phone_number || '',
+            role: c.role || 'customer',
+            is_active: c.is_active !== false,
+            created_at: c.created_at,
+            total_orders: Number(c.total_orders || 0),
+            total_spent: Number(c.total_spent || 0),
+          }));
+
+        // Merge any locally registered accounts not yet on Neon
+        const localRegistered = JSON.parse(localStorage.getItem('ubh_registered_users') || '[]');
+        const neonEmails = new Set(sanitized.map((s) => s.email?.toLowerCase()));
+
+        for (const lr of localRegistered) {
+          if (
+            (lr.role === 'customer' || !lr.role) &&
+            !neonEmails.has(lr.email?.toLowerCase()) &&
+            lr.email !== 'aliyu.haruna@example.com' &&
+            lr.email !== 'fatima.bello@example.com'
+          ) {
+            sanitized.push({
+              id: lr.id,
+              full_name: lr.full_name,
+              email: lr.email,
+              phone_number: lr.phone_number || '',
+              role: 'customer',
+              is_active: lr.is_active !== false,
+              created_at: lr.created_at || new Date().toISOString(),
+              total_orders: 0,
+              total_spent: 0,
+            });
+          }
+        }
+
+        saveStoredData(STORAGE_KEYS.CUSTOMERS, sanitized);
+        return sanitized;
+      }
+    } catch (e) {
+      console.warn('Neon getCustomers query warning:', e);
+    }
+  }
+
+  // Local fallback: purge any dummy users from cache
+  const rawStored = getStoredData(STORAGE_KEYS.CUSTOMERS, []);
+  const cleanStored = rawStored.filter(
+    (c) =>
+      c.id !== 'cust-1' &&
+      c.id !== 'cust-2' &&
+      c.email !== 'aliyu.haruna@example.com' &&
+      c.email !== 'fatima.bello@example.com'
+  );
+
+  const localRegistered = JSON.parse(localStorage.getItem('ubh_registered_users') || '[]');
+  const existingEmails = new Set(cleanStored.map((s) => s.email?.toLowerCase()));
+  for (const lr of localRegistered) {
+    if (
+      (lr.role === 'customer' || !lr.role) &&
+      !existingEmails.has(lr.email?.toLowerCase()) &&
+      lr.email !== 'aliyu.haruna@example.com' &&
+      lr.email !== 'fatima.bello@example.com'
+    ) {
+      cleanStored.push({
+        id: lr.id,
+        full_name: lr.full_name,
+        email: lr.email,
+        phone_number: lr.phone_number || '',
+        role: 'customer',
+        is_active: lr.is_active !== false,
+        created_at: lr.created_at || new Date().toISOString(),
+        total_orders: 0,
+        total_spent: 0,
+      });
+    }
+  }
+
+  saveStoredData(STORAGE_KEYS.CUSTOMERS, cleanStored);
+  return cleanStored;
 }
 
 export async function toggleCustomerStatus(id) {
-  const customers = await getCustomers();
-  const updated = customers.map((c) => (c.id === id ? { ...c, is_active: !c.is_active } : c));
+  if (isNeonConfigured && sql) {
+    try {
+      const isUuid = id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        await sql`
+          UPDATE users
+          SET is_active = NOT COALESCE(is_active, true),
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${id}
+        `;
+      }
+    } catch (e) {
+      console.warn('Neon toggle customer error:', e);
+    }
+  }
+
+  const current = getStoredData(STORAGE_KEYS.CUSTOMERS, []);
+  const updated = current.map((c) => (c.id === id ? { ...c, is_active: !c.is_active } : c));
   saveStoredData(STORAGE_KEYS.CUSTOMERS, updated);
+
+  const registered = JSON.parse(localStorage.getItem('ubh_registered_users') || '[]');
+  const updatedReg = registered.map((u) => (u.id === id ? { ...u, is_active: !u.is_active } : u));
+  localStorage.setItem('ubh_registered_users', JSON.stringify(updatedReg));
+
+  return updated;
+}
+
+export async function deleteCustomer(id) {
+  if (isNeonConfigured && sql) {
+    try {
+      const isUuid = id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUuid) {
+        await sql`DELETE FROM users WHERE id = ${id}`;
+      }
+    } catch (e) {
+      console.warn('Neon delete customer error:', e);
+    }
+  }
+
+  const current = getStoredData(STORAGE_KEYS.CUSTOMERS, []);
+  const updated = current.filter((c) => c.id !== id);
+  saveStoredData(STORAGE_KEYS.CUSTOMERS, updated);
+
+  const registered = JSON.parse(localStorage.getItem('ubh_registered_users') || '[]');
+  const updatedReg = registered.filter((u) => u.id !== id);
+  localStorage.setItem('ubh_registered_users', JSON.stringify(updatedReg));
+
   return updated;
 }
 

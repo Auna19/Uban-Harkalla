@@ -69,15 +69,44 @@ export function AuthProvider({ children }) {
           throw new Error('An account with this email address already exists. Please login.');
         }
         const createdUsers = await sql`
-          INSERT INTO users (full_name, email, phone_number, password_hash, role)
-          VALUES (${fullName}, ${email.toLowerCase()}, ${phone}, ${password}, 'customer')
-          RETURNING id, full_name, email, phone_number, role, created_at
+          INSERT INTO users (full_name, email, phone_number, password_hash, role, is_active)
+          VALUES (${fullName}, ${email.toLowerCase()}, ${phone}, ${password}, 'customer', true)
+          RETURNING id, full_name, email, phone_number, role, is_active, created_at
         `;
         if (createdUsers && createdUsers.length > 0) {
           const created = createdUsers[0];
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(created));
           setUser(created);
           setProfile(created);
+
+          // Sync into local CUSTOMERS storage immediately
+          try {
+            const rawCust = localStorage.getItem('ubh_customers');
+            const currentCust = rawCust ? JSON.parse(rawCust) : [];
+            const cleanCust = currentCust.filter(
+              (c) =>
+                c.id !== 'cust-1' &&
+                c.id !== 'cust-2' &&
+                c.email !== 'aliyu.haruna@example.com' &&
+                c.email !== 'fatima.bello@example.com' &&
+                c.email?.toLowerCase() !== created.email.toLowerCase()
+            );
+            const newCustEntry = {
+              id: created.id,
+              full_name: created.full_name,
+              email: created.email,
+              phone_number: created.phone_number,
+              role: created.role || 'customer',
+              total_orders: 0,
+              total_spent: 0,
+              is_active: true,
+              created_at: created.created_at || new Date().toISOString(),
+            };
+            localStorage.setItem('ubh_customers', JSON.stringify([newCustEntry, ...cleanCust]));
+          } catch (e) {
+            console.warn('Sync customer cache error:', e);
+          }
+
           triggerAuthWelcomePlayback(`signup-${Date.now()}`);
           return true;
         }
@@ -101,11 +130,40 @@ export function AuthProvider({ children }) {
       full_name: fullName,
       phone_number: phone,
       role: 'customer',
+      is_active: true,
       created_at: new Date().toISOString(),
     };
     registered.push(newUser);
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(registered));
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newUser));
+
+    // Also sync into local CUSTOMERS storage
+    try {
+      const rawCust = localStorage.getItem('ubh_customers');
+      const currentCust = rawCust ? JSON.parse(rawCust) : [];
+      const cleanCust = currentCust.filter(
+        (c) =>
+          c.id !== 'cust-1' &&
+          c.id !== 'cust-2' &&
+          c.email !== 'aliyu.haruna@example.com' &&
+          c.email !== 'fatima.bello@example.com' &&
+          c.email?.toLowerCase() !== newUser.email.toLowerCase()
+      );
+      const newCustEntry = {
+        id: newUser.id,
+        full_name: newUser.full_name,
+        email: newUser.email,
+        phone_number: newUser.phone_number,
+        role: 'customer',
+        total_orders: 0,
+        total_spent: 0,
+        is_active: true,
+        created_at: newUser.created_at,
+      };
+      localStorage.setItem('ubh_customers', JSON.stringify([newCustEntry, ...cleanCust]));
+    } catch (e) {
+      console.warn('Sync customer cache error:', e);
+    }
 
     setUser(newUser);
     setProfile(newUser);
@@ -123,12 +181,15 @@ export function AuthProvider({ children }) {
     if (isNeonConfigured && sql) {
       try {
         const rows = await sql`
-          SELECT id, full_name, email, phone_number, role, created_at
+          SELECT id, full_name, email, phone_number, role, COALESCE(is_active, true) as is_active, created_at
           FROM users
           WHERE LOWER(TRIM(email)) = ${cleanEmail} AND password_hash = ${password}
         `;
         if (rows && rows.length > 0) {
           const userFound = rows[0];
+          if (userFound.is_active === false) {
+            throw new Error('Your customer account has been suspended. Please contact customer support.');
+          }
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(userFound));
           setUser(userFound);
           setProfile(userFound);
@@ -136,6 +197,7 @@ export function AuthProvider({ children }) {
           return true;
         }
       } catch (err) {
+        if (err.message?.includes('suspended')) throw err;
         console.warn('Neon login warning, using local mode:', err);
       }
     }
@@ -146,6 +208,9 @@ export function AuthProvider({ children }) {
     );
     if (!matched) {
       throw new Error('Invalid email or password. Please try again.');
+    }
+    if (matched.is_active === false) {
+      throw new Error('Your customer account has been suspended. Please contact customer support.');
     }
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(matched));
     setUser(matched);

@@ -11,20 +11,7 @@ export default function CustomerAddressesPage() {
   const [addresses, setAddresses] = useState(() => {
     try {
       const raw = localStorage.getItem(`${ADDRESS_STORAGE_KEY}_${user?.id || 'demo'}`);
-      return raw
-        ? JSON.parse(raw)
-        : [
-            {
-              id: 'addr-1',
-              label: 'Home',
-              recipient_name: profile?.full_name || 'Aliyu Haruna',
-              phone_number: profile?.phone_number || '08031234567',
-              state: 'Kano',
-              city: 'Kano Metropolis',
-              street_address: '14 Bompai Road, Near Central Hospital',
-              is_default: true,
-            },
-          ];
+      return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
     }

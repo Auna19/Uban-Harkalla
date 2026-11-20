@@ -191,7 +191,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Aliyu Haruna"
+                      placeholder="e.g. Musa Abdullahi"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full text-sm rounded-xl px-4 py-2.5 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
