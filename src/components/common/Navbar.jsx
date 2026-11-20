@@ -76,7 +76,13 @@ export default function Navbar() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-100 hover:bg-slate-50 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 rounded-full pl-9 pr-4 py-2.5 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-2xs"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <button
+                type="submit"
+                aria-label="Submit search"
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-0 border-0 bg-transparent cursor-pointer flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-colors"
+              >
+                <Search className="w-4 h-4" />
+              </button>
             </div>
           </form>
 
@@ -231,7 +237,13 @@ export default function Navbar() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-100 text-sm rounded-xl pl-10 pr-4 py-2.5 border border-slate-200"
             />
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <button
+              type="submit"
+              aria-label="Submit mobile search"
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-0 border-0 bg-transparent cursor-pointer flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-colors"
+            >
+              <Search className="w-4 h-4" />
+            </button>
           </form>
 
           <nav className="flex flex-col space-y-2">
