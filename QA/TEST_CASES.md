@@ -13,12 +13,288 @@
 
 ```mermaid
 pie title Test Cases Distribution by Category
-    "Positive Functional Cases" : 48
+    "End-to-End (E2E) Functional Flows" : 10
+    "Modular Positive Functional Cases" : 48
     "Negative Failure Handling" : 36
     "Boundary & Edge Conditions" : 28
     "Security & Access Control" : 18
     "Cross-Device & Responsive" : 14
 ```
+
+---
+
+## Master Section: End-to-End (E2E) Functional User Journey Test Suite
+
+The following **10 master end-to-end test cases** validate complete cross-page, multi-role user workflows spanning storefront discovery, client-side state engines, cloud database synchronization, administrative fulfillment, and financial payment handling.
+
+### **E2E-TC-001: Guest Customer Discovery to Online Payment & Order Confirmation Flow**
+- **Flow**: Public Storefront → Multi-Filter Search → Dynamic Variation Selection → Shopping Cart → Paystack Checkout → Success Receipt & Stock Decrement
+- **User Persona**: Guest Retail Buyer (Abubakar in Kano)
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: Device has network access; customer is not logged in; iPhone 15 Pro Max has stock >= 5 units.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Open `http://localhost:3000/`.
+  2. Type `"iPhone 15"` in the header search input and press Enter.
+  3. On `/shop`, filter by Condition: `"Brand New (Sealed)"` and Category: `"Apple iPhones"`.
+  4. Click on the product card for `"Apple iPhone 15 Pro Max"`.
+  5. On `/product/apple-iphone-15-pro-max`, select Storage: `"256GB"` and Color: `"Natural Titanium"`.
+  6. Verify the price reflects ₦1,580,000 and the gallery highlights the Natural Titanium device image.
+  7. Click `"Add to Shopping Cart"`.
+  8. Verify `CartNotificationToast` slides in at the top right showing: *"✓ Added to Cart: Apple iPhone 15 Pro Max"*; click `"View Cart"`.
+  9. On `/cart`, verify line total is ₦1,580,000. Inspect the free delivery progress bar indicating free Kano delivery qualification.
+  10. Click `"Proceed to Checkout"`.
+  11. On `/checkout`, input:
+      - Full Name: `Abubakar Garba`
+      - Email: `abubakar.garba.test@gmail.com`
+      - Phone: `08031234567`
+      - Delivery Method: `Home / Office Delivery`
+      - State: `Kano`
+      - City: `Kano Metropolis`
+      - Street Address: `Plot 18 Zoo Road, Near Gidan Dan Hausa`
+  12. Select Payment Method: `"Paystack (Debit Card / Bank Transfer)"`.
+  13. Click `"Place Order & Pay with Paystack"`.
+  14. In the Paystack inline popup modal, complete the test transaction (using test success card `4084 0840 0000 4084`).
+- **Expected End-to-End Result**:
+  - Paystack webhook/callback succeeds immediately.
+  - User is redirected to `/checkout/success`.
+  - Unique Order Reference is generated (e.g. `UBH-2026-XXXXX`).
+  - Order is inserted into Neon database `orders` table with `payment_status: 'verified'` and `order_status: 'Confirmed'`.
+  - Cart counter resets to 0 and local cart cache is cleared.
+  - Return to `/product/apple-iphone-15-pro-max` and verify stock decremented by exactly 1 unit.
+
+---
+
+### **E2E-TC-002: Customer Sign Up, Address Book Setup, Bank Transfer Checkout & Dashboard Tracking**
+- **Flow**: New Customer Registration → Brand Audio Welcome → Address Book Management → Catalog Selection → Direct Bank Transfer Checkout → Order Tracking Timeline in Customer Dashboard
+- **User Persona**: Registered Customer (Fatima in Abuja)
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: Clean browser session; email `fatima.test.abuja@gmail.com` is not yet registered.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Navigate to `/signup`.
+  2. Complete form:
+     - Full Name: `Fatima Aliyu`
+     - Email: `fatima.test.abuja@gmail.com`
+     - Phone: `08129876543`
+     - Password: `Password123!`
+     - Confirm Password: `Password123!`
+  3. Click `"Create Account"`.
+  4. Verify system authenticates account, stores session in `localStorage`, plays audio welcome chime, and redirects to `/dashboard`.
+  5. In customer sidebar, click `"Addresses"` (`/dashboard/addresses`).
+  6. Click `"Add New Address"`, input:
+     - Label: `Home`
+     - Recipient Name: `Fatima Aliyu`
+     - Phone: `08129876543`
+     - State: `Abuja (FCT)`
+     - City: `Wuse 2`
+     - Street: `45 Aminu Kano Crescent`
+     - Check: `Set as default address`
+  7. Click `"Save Address"`. Address card appears with `"Default"` badge.
+  8. Click `"Shop"` in top navigation.
+  9. Add `"Samsung Galaxy S24 Ultra 5G"` (512GB, Titanium Gray) to cart and proceed to `/checkout`.
+  10. Observe address fields auto-fill from saved default address.
+  11. Select Payment Method: `"Direct Bank Transfer"`.
+  12. Click `"Place Order"`.
+  13. Verify `/checkout/success` displays UBAN HARKALLA corporate bank accounts (Zenith Bank / Stanbic IBTC) with payment instructions.
+  14. Click `"View My Orders"` navigating to `/dashboard/orders`.
+  15. Click on the newly placed order.
+- **Expected End-to-End Result**:
+  - Order appears in Customer Dashboard with status `"Pending"` and payment status `"pending"`.
+  - Progress tracker displays milestone 1 active (`Pending: Awaiting Bank Transfer verification`).
+  - Invoice and order summary match exact purchased variant specs and delivery address.
+
+---
+
+### **E2E-TC-003: Admin Inventory Creation to Storefront Cold-Start Propagation Flow**
+- **Flow**: Admin Portal Login → Image Upload with Canvas Scaling → Primary Photo Selection → Variant Matrix Builder → Cloud Neon DB Sync → Private/Cold-Start Visitor Verification
+- **User Persona**: Store Inventory Manager & New Store Visitor
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: Admin credentials `admin@ubanharkalla.com` / `admin123`.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Navigate to `/admin/login`. Log in with super admin credentials.
+  2. Navigate to `/admin/products/create`.
+  3. Input Product Details:
+     - Product Name: `"Google Pixel 9 Pro Fold"`
+     - Base Price: `2100000`
+     - Discounted Price: `1980000`
+     - Category: `Android Smartphones`
+     - Operating System: `Android`
+     - Short Description: `"Next-gen foldable with Google Tensor G4 and dual displays."`
+  4. Drag and drop 3 high-resolution sample photos (each > 3MB).
+  5. Verify `imageUpload.js` canvas engine scales photos to max 900px and under 150KB. Success toast displays: *"Processed and added 3 image(s) successfully!"*
+  6. Hover over Image #2 and click `"Make Primary"`. Verify primary badge moves to Image #2.
+  7. In Variations section, configure:
+     - Variant 1: Storage: `256GB`, Color: `Obsidian`, Stock: `5`, Price: `1980000`.
+     - Variant 2: Storage: `512GB`, Color: `Porcelain`, Stock: `3`, Price: `2200000`, with custom photo upload.
+  8. Click `"Save Product"`. Verify green toast: *"Product 'Google Pixel 9 Pro Fold' created successfully!"* Redirects to `/admin/products`.
+  9. Open a fresh Incognito / Private browser window (completely empty `localStorage` simulating a first-time user).
+  10. Open `http://localhost:3000/`.
+  11. Check Featured / New Arrivals on homepage.
+  12. Navigate to `/shop` and search `"Pixel 9 Pro Fold"`.
+  13. Click the product card and inspect the product details page.
+- **Expected End-to-End Result**:
+  - The newly created product immediately appears for first-time visitors directly querying Neon database.
+  - Image #2 displays as the main preview photo.
+  - Switching to `"Porcelain"` variant immediately swaps to the custom uploaded porcelain photo.
+  - Prices and stock levels match the admin configuration perfectly.
+
+---
+
+### **E2E-TC-004: End-to-End Order Dispatch, Fulfillment & Audit Log Lifecycle**
+- **Flow**: Order Placement → Admin Order Ingestion → Status Filter Tab Navigation → Payment Verification → Dispatch Status Progression → Customer Live Timeline Sync
+- **User Persona**: Customer (Buyer) & Store Fulfillment Dispatcher (Admin)
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: An order exists in `Pending` status placed via Direct Bank Transfer.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Admin logs into staff portal and navigates to `/admin/orders`.
+  2. Click on the `"Pending"` filter tab.
+  3. Verify the target order is listed with orange `"Pending"` badge.
+  4. Click on the order to open `/admin/orders/:id`.
+  5. Under Payment Information, click `"Verify Bank Payment"`.
+  6. Enter confirmation note: *"Payment verified against Zenith Bank credit alert Ref #ZEN-9921"* and submit.
+  7. Verify payment status updates to `"verified"` and order status transitions to `"Confirmed"`.
+  8. Under Dispatch Controls, select New Status: `"Processing"`, add note: *"Device packaged in tamper-evident box, IMEI #3567881234 recorded"*, and click `"Update Status"`.
+  9. Advance status to `"Out for Delivery"`, add note: *"Dispatched with Kano express dispatch rider (Aliyu - 08035551234)"*.
+  10. Advance status to `"Delivered"`, add note: *"Package handed to customer at Zoo Road premises; OTP signature verified"*.
+  11. Open customer session in another tab and navigate to `/dashboard/orders/:id`.
+- **Expected End-to-End Result**:
+  - Admin audit trail (`status_history`) logs every milestone transition with staff name, timestamp, and note.
+  - Customer order timeline shows all 5 milestones completed in green with exact courier notes.
+  - Customer receives order delivery notification in dashboard notification center.
+
+---
+
+### **E2E-TC-005: Customer Account Lifecycle, Security & Suspension Governance Flow**
+- **Flow**: Customer Registration → Admin Directory Ingestion → Account Suspension → Login Rejection Enforcement → Account Reactivation → Permanent Purge
+- **User Persona**: New Customer & Super Administrator
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: Admin logged in on `/admin/customers`.
+- **Detailed Step-by-Step E2E Execution**:
+  1. In a private browser window, go to `/signup` and register:
+     - Name: `Ibrahim Shehu`
+     - Email: `ibrahim.shehu.security@test.com`
+     - Phone: `08091122334`
+     - Password: `SecretPassword123`
+  2. Once signed up, return to admin tab on `/admin/customers`.
+  3. Refresh or observe live table: verify `Ibrahim Shehu` appears in row with `Active` green badge.
+  4. Click `"Suspend"` button on Ibrahim's row.
+  5. Verify status badge changes to `"Suspended"` in red. Toast displays: *"Suspended customer account 'Ibrahim Shehu'."*
+  6. In customer browser window, log out and navigate to `/login`.
+  7. Attempt logging in as `ibrahim.shehu.security@test.com` with `SecretPassword123`.
+  8. Verify login fails with error message: *"Your customer account has been suspended. Please contact customer support."*
+  9. In admin window, click `"Activate"` button on Ibrahim's row. Status returns to `"Active"`.
+  10. In customer window, retry login with same credentials. Login succeeds and opens `/dashboard`.
+  11. In admin window, click the trash icon on Ibrahim's row. Modal prompts: *"Delete Customer Account"*. Click `"Yes, Delete"`.
+- **Expected End-to-End Result**:
+  - `is_active` updates reliably in the live Neon `users` table upon suspension and reactivation.
+  - Suspended accounts are rejected at the authentication gateway.
+  - Customer deletion purges the record from both Neon DB and local storage cache; customer can no longer log in.
+
+---
+
+### **E2E-TC-006: Atomic Inventory Depletion, Sold-Out Safeguard & Restoration Flow**
+- **Flow**: Last Unit Inventory Setup → User A Checkout → Stock Becomes Zero → User B Storefront Lockout → Admin Order Cancellation → Automatic Stock Restoration
+- **User Persona**: Customer A, Customer B, and Store Admin
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: A product variant (e.g. AirPods Pro 2) has `stock_quantity = 1`.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Customer A opens `/product/apple-airpods-pro-2-usb-c` in Browser Window A.
+  2. Customer B opens `/product/apple-airpods-pro-2-usb-c` in Browser Window B.
+  3. Customer A clicks `"Add to Shopping Cart"`, navigates to `/checkout`, and completes checkout via Paystack.
+  4. Verify Customer A's order succeeds; stock in database decrements from 1 to 0.
+  5. Customer B refreshes Window B.
+  6. Observe: stock badge displays `"Out of Stock"` in red.
+  7. Verify `"Add to Shopping Cart"` button is disabled with text `"Sold Out"`.
+  8. Attempting to force an add-to-cart or checkout via script is rejected with: *"Product is no longer available in stock"*.
+  9. Admin opens `/admin/orders`, finds Customer A's order, and selects `"Cancel Order"` with note: *"Customer cancelled before packaging"*.
+  10. Customer B refreshes Window B.
+- **Expected End-to-End Result**:
+  - Stock decrements atomically without race conditions.
+  - Zero-stock products are locked from further purchase.
+  - Cancelling an order automatically restores the 1 unit back to inventory; Add to Cart button re-enables for Customer B.
+
+---
+
+### **E2E-TC-007: Category & Brand Lifecycle to Storefront Discovery Flow**
+- **Flow**: Admin Category Creation → Product Association → Storefront Filter Population → Customer Filtering → Linked Product Deletion Safeguard
+- **User Persona**: Admin Operations & Storefront Shopper
+- **Priority**: **P1 (High)**
+- **Pre-Conditions**: Admin logged in.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Navigate to `/admin/categories`.
+  2. Click `"Add New Category"`.
+  3. Enter Category Name: `"Gaming Consoles & Gear"`.
+  4. Upload a category banner photo. Click Save. Toast confirms creation.
+  5. Navigate to `/admin/products/create`.
+  6. Create product `"PlayStation 5 Slim 1TB"` and select Category: `"Gaming Consoles & Gear"`. Save product.
+  7. Open public storefront `/` in a new tab.
+  8. Navigate to `/shop`. Observe `"Gaming Consoles & Gear"` appears in Category filter options.
+  9. Click `"Gaming Consoles & Gear"` filter tab. Only the PS5 product appears.
+  10. Return to `/admin/categories` and attempt deleting `"Gaming Consoles & Gear"`.
+- **Expected End-to-End Result**:
+  - New category propagates from admin to public catalog filters seamlessly.
+  - Attempting to delete a category that has active assigned products is blocked by a safety guard: *"Cannot delete category with active products. Reassign or delete products first."*
+
+---
+
+### **E2E-TC-008: Direct WhatsApp Sales Inquiry & Support Handoff Flow**
+- **Flow**: Product Inspection → WhatsApp CTA Click → Message Parameterization → Handoff to Official Business Hotline
+- **User Persona**: Mobile Shopper Seeking Device Verification
+- **Priority**: **P1 (High)**
+- **Pre-Conditions**: On `/product/apple-iphone-14-pro`.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Open `/product/apple-iphone-14-pro`.
+  2. Select Variant: Storage: `"256GB"`, Color: `"Deep Purple"`, Condition: `"UK Used (Grade A)"`.
+  3. Inspect battery health disclosure (`98% Battery Health`).
+  4. Click `"Order via WhatsApp"` button.
+  5. Inspect the generated URL target.
+- **Expected End-to-End Result**:
+  - Browser opens WhatsApp endpoint: `https://wa.me/2348123456789?text=...`.
+  - The URL-encoded message body contains:
+    - Store greeting: *"Hello UBAN HARKALLA"*
+    - Device title: *"Apple iPhone 14 Pro"*
+    - Selected specifications: *"Storage: 256GB | Color: Deep Purple | Condition: UK Used (Grade A)"*
+    - Listed price: *"₦1,250,000"*
+    - Inquiry prompt: *"Is this device currently available for same-day delivery in Kano?"*
+
+---
+
+### **E2E-TC-009: Offline-to-Online Network Resilience & Seamless Sync Flow**
+- **Flow**: Online Cart Building → Sudden Network Disconnection → Offline Cart Mutation & Navigation → Reconnection → Lossless Database Resynchronization
+- **User Persona**: Shopper on Unstable Mobile Network
+- **Priority**: **P0 (Critical / Blocker)**
+- **Pre-Conditions**: User on `/shop` with online network.
+- **Detailed Step-by-Step E2E Execution**:
+  1. Add 2 items to cart while online.
+  2. In Chrome DevTools Network panel, set throttling to `"Offline"`.
+  3. Navigate to `/cart`.
+  4. Increment quantity of Item 1 from 1 to 2.
+  5. Navigate to `/about` and then back to `/cart`.
+  6. Observe: cart items, updated quantities, and subtotal calculations remain intact via local storage engine without white-screen or unhandled promise rejection.
+  7. In DevTools, restore Network to `"Online"`.
+  8. Click `"Proceed to Checkout"`.
+- **Expected End-to-End Result**:
+  - Application handles offline drops gracefully using resilient dual-mode architecture.
+  - Upon reconnection, `dataService.js` silently reconnects with Neon PostgreSQL over HTTPS.
+  - User completes checkout without losing cart contents or needing to restart shopping session.
+
+---
+
+### **E2E-TC-010: Cross-Device Multi-Session State Consistency Flow**
+- **Flow**: Mobile Phone Registration & Purchase → Desktop Laptop Login → Immediate Profile, Address & Order Synchronization
+- **User Persona**: Customer (Musa Abdullahi)
+- **Priority**: **P1 (High)**
+- **Pre-Conditions**: Two separate browser instances (Browser A: simulated mobile 390px; Browser B: desktop 1440px).
+- **Detailed Step-by-Step E2E Execution**:
+  1. In Browser A (Mobile), register an account and place an order for Anker Power Bank.
+  2. Save a delivery address in Kano Metropolis.
+  3. In Browser B (Desktop), open `http://localhost:3000/login`.
+  4. Log in using the same email and password registered in Browser A.
+  5. Navigate to `/dashboard/orders`.
+  6. Navigate to `/dashboard/addresses`.
+- **Expected End-to-End Result**:
+  - Browser B queries Neon cloud database directly upon login.
+  - The order placed on mobile in Browser A appears immediately on desktop in Browser B with matching reference code.
+  - Saved delivery addresses are identical across both devices.
 
 ---
 
