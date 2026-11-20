@@ -14,8 +14,10 @@ import {
   XCircle,
 } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { useAdminToast } from '../../context/AdminToastContext';
 
 export default function AdminProductsPage() {
+  const { showToast } = useAdminToast();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,24 +47,30 @@ export default function AdminProductsPage() {
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
+    const targetName = deleteTarget.name;
     await deleteProduct(deleteTarget.id);
     setDeleteTarget(null);
+    showToast(`Product "${targetName}" deleted successfully!`, 'info');
     fetchProducts();
   };
 
   const handleToggleFeatured = async (product) => {
+    const nextVal = !product.is_featured;
     await saveProduct({
       ...product,
-      is_featured: !product.is_featured,
+      is_featured: nextVal,
     });
+    showToast(nextVal ? `Marked "${product.name}" as Featured!` : `Removed "${product.name}" from Featured`, 'info');
     fetchProducts();
   };
 
   const handleToggleActive = async (product) => {
+    const nextVal = !product.is_active;
     await saveProduct({
       ...product,
-      is_active: !product.is_active,
+      is_active: nextVal,
     });
+    showToast(nextVal ? `Published "${product.name}" active on store!` : `Moved "${product.name}" to draft`, 'info');
     fetchProducts();
   };
 
@@ -77,7 +85,7 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -187,13 +195,12 @@ export default function AdminProductsPage() {
 
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <span
-                        className={`font-bold ${
-                          prod.stock_quantity === 0
-                            ? 'text-red-400'
-                            : isLowStock
+                        className={`font-bold ${prod.stock_quantity === 0
+                          ? 'text-red-400'
+                          : isLowStock
                             ? 'text-amber-400'
                             : 'text-emerald-400'
-                        }`}
+                          }`}
                       >
                         {prod.stock_quantity} units
                       </span>
@@ -202,11 +209,10 @@ export default function AdminProductsPage() {
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <button
                         onClick={() => handleToggleFeatured(prod)}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          prod.is_featured
-                            ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
-                            : 'text-slate-600 hover:text-slate-400'
-                        }`}
+                        className={`p-1.5 rounded-lg transition-colors ${prod.is_featured
+                          ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
+                          : 'text-slate-600 hover:text-slate-400'
+                          }`}
                         title="Toggle Featured"
                       >
                         <Star className={`w-4 h-4 ${prod.is_featured ? 'fill-amber-400' : ''}`} />
@@ -216,11 +222,10 @@ export default function AdminProductsPage() {
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <button
                         onClick={() => handleToggleActive(prod)}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          prod.is_active !== false
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : 'bg-slate-800 text-slate-400'
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${prod.is_active !== false
+                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                          : 'bg-slate-800 text-slate-400'
+                          }`}
                       >
                         {prod.is_active !== false ? 'Active' : 'Draft'}
                       </button>

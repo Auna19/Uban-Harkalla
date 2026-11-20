@@ -91,7 +91,8 @@ export const INITIAL_PRODUCTS = [
     discounted_price: 1580000,
     is_featured: true,
     is_active: true,
-    images: ['/1001102628.jpg', '/1001102630.jpg', '/1001102631.jpg'],
+    image_url: '/1001102631.jpg',
+    images: ['/1001102631.jpg', '/1001102630.jpg', '/1001102628.jpg'],
     stock_quantity: 15,
     specifications: [
       { key: 'Display', value: '6.7-inch Super Retina XDR with ProMotion 120Hz' },

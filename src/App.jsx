@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AudioProvider } from './context/AudioContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { AdminToastProvider } from './context/AdminToastContext';
 
 // Common
 import Navbar from './components/common/Navbar';
@@ -82,7 +83,8 @@ export default function App() {
       <AudioProvider>
         <AuthProvider>
           <CartProvider>
-            <AppLayout>
+            <AdminToastProvider>
+              <AppLayout>
               <Routes>
                 {/* Public Website Routes */}
                 <Route path="/" element={<HomePage />} />
@@ -145,7 +147,8 @@ export default function App() {
                 </Route>
               </Routes>
             </AppLayout>
-          </CartProvider>
+          </AdminToastProvider>
+        </CartProvider>
         </AuthProvider>
       </AudioProvider>
     </BrowserRouter>

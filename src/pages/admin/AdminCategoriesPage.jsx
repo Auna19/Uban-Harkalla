@@ -3,8 +3,10 @@ import { getCategories, saveCategory, deleteCategory } from '../../services/data
 import { Layers, Plus, Edit, Trash2, CheckCircle2, Save, X, Upload, Image as ImageIcon } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import { processLocalImage } from '../../utils/imageUpload';
+import { useAdminToast } from '../../context/AdminToastContext';
 
 export default function AdminCategoriesPage() {
+  const { showToast } = useAdminToast();
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
@@ -34,8 +36,9 @@ export default function AdminCategoriesPage() {
     try {
       const dataUrl = await processLocalImage(file);
       setForm((prev) => ({ ...prev, image_url: dataUrl }));
+      showToast('Category image uploaded and optimized!', 'success');
     } catch (err) {
-      alert(err.message || 'Failed to process image');
+      showToast(err.message || 'Failed to process image', 'error');
     } finally {
       setUploadingImage(false);
     }
@@ -55,6 +58,8 @@ export default function AdminCategoriesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const isEdit = Boolean(editingCat);
+    const catName = form.name;
     const cleanSlug = (form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || `cat-${Date.now()}`;
     await saveCategory({
       id: editingCat?.id,
@@ -62,19 +67,22 @@ export default function AdminCategoriesPage() {
       slug: cleanSlug,
     });
     setShowModal(false);
+    showToast(isEdit ? `Category "${catName}" updated successfully!` : `Category "${catName}" created successfully!`, 'success');
     load();
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
+    const catName = deleteTarget.name;
     await deleteCategory(deleteTarget.id);
     setDeleteTarget(null);
+    showToast(`Category "${catName}" deleted successfully!`, 'info');
     load();
   };
 
   return (
     <div className="space-y-6">
-      
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Categories Management</h1>
@@ -102,9 +110,8 @@ export default function AdminCategoriesPage() {
               <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
               <div className="absolute top-3 right-3">
                 <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    cat.is_active !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-400'
-                  }`}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cat.is_active !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-400'
+                    }`}
                 >
                   {cat.is_active !== false ? 'Active' : 'Inactive'}
                 </span>

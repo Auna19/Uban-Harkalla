@@ -66,7 +66,12 @@ export async function getCategories() {
   if (isNeonConfigured && sql) {
     try {
       const rows = await sql`SELECT * FROM categories WHERE is_active = true ORDER BY display_order ASC`;
-      if (rows && rows.length > 0) return rows;
+      if (rows && rows.length > 0) {
+        try {
+          localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(rows));
+        } catch (_) { }
+        return rows;
+      }
     } catch (e) {
       console.warn('Neon categories query warning:', e);
     }
@@ -217,6 +222,70 @@ export async function saveAttribute(attribute) {
 export async function getProducts(filters = {}) {
   let products = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
 
+  if (isNeonConfigured && sql) {
+    try {
+      const neonRows = await sql`
+        SELECT p.*,
+               COALESCE(
+                 (SELECT json_agg(v.*) FROM product_variations v WHERE v.product_id = p.id),
+                 '[]'::json
+               ) as variations
+        FROM products p
+        ORDER BY p.created_at DESC
+      `;
+      if (neonRows && neonRows.length > 0) {
+        const neonMap = new Map();
+        neonRows.forEach((np) => {
+          const images = Array.isArray(np.images)
+            ? np.images
+            : (typeof np.images === 'string' ? JSON.parse(np.images || '[]') : []);
+          const primaryImg = images[0] || np.image_url || '/1001102631.jpg';
+          const formatted = {
+            ...np,
+            base_price: Number(np.base_price),
+            discounted_price: np.discounted_price ? Number(np.discounted_price) : null,
+            stock_quantity: Number(np.stock_quantity || 0),
+            is_featured: Boolean(np.is_featured),
+            is_active: Boolean(np.is_active),
+            images: images.length > 0 ? images : [primaryImg],
+            image_url: primaryImg,
+            variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : undefined,
+          };
+          if (np.slug) neonMap.set(np.slug, formatted);
+          if (np.id) neonMap.set(np.id, formatted);
+        });
+
+        // Overlay Neon updates over local / initial products
+        products = products.map((p) => {
+          const fromNeon = neonMap.get(p.slug) || neonMap.get(p.id);
+          if (fromNeon) {
+            return {
+              ...p,
+              ...fromNeon,
+              variations: fromNeon.variations && fromNeon.variations.length > 0 ? fromNeon.variations : p.variations,
+            };
+          }
+          return p;
+        });
+
+        // Append any new products in Neon that weren't in initial
+        neonRows.forEach((np) => {
+          if (!products.some((p) => p.slug === np.slug || p.id === np.id)) {
+            const formatted = neonMap.get(np.slug) || neonMap.get(np.id);
+            if (formatted) products.unshift(formatted);
+          }
+        });
+
+        // Persist the fresh merged state to storage for fast caching
+        try {
+          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+        } catch (_) { }
+      }
+    } catch (e) {
+      console.warn('Neon products query warning:', e);
+    }
+  }
+
   if (filters.category) {
     products = products.filter(
       (p) => p.category_id === filters.category || p.category_name?.toLowerCase() === filters.category.toLowerCase()
@@ -281,13 +350,46 @@ export async function getProducts(filters = {}) {
 }
 
 export async function getProductBySlug(slug) {
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`
+        SELECT p.*,
+               COALESCE(
+                 (SELECT json_agg(v.*) FROM product_variations v WHERE v.product_id = p.id),
+                 '[]'::json
+               ) as variations
+        FROM products p
+        WHERE p.slug = ${slug} OR p.id::text = ${slug}
+        LIMIT 1
+      `;
+      if (rows && rows.length > 0) {
+        const np = rows[0];
+        const local = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS).find((p) => p.slug === slug || p.id === slug);
+        const images = Array.isArray(np.images) ? np.images : (typeof np.images === 'string' ? JSON.parse(np.images || '[]') : []);
+        const primaryImg = images[0] || np.image_url || local?.image_url || '/1001102631.jpg';
+        return {
+          ...(local || {}),
+          ...np,
+          base_price: Number(np.base_price),
+          discounted_price: np.discounted_price ? Number(np.discounted_price) : null,
+          stock_quantity: Number(np.stock_quantity || 0),
+          is_featured: Boolean(np.is_featured),
+          is_active: Boolean(np.is_active),
+          images: images.length > 0 ? images : (local?.images || [primaryImg]),
+          image_url: primaryImg,
+          variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : local?.variations,
+        };
+      }
+    } catch (e) {
+      console.warn('Neon getProductBySlug warning:', e);
+    }
+  }
   const products = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
   return products.find((p) => p.slug === slug || p.id === slug) || null;
 }
 
 export async function getProductById(id) {
-  const products = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-  return products.find((p) => p.id === id) || null;
+  return getProductBySlug(id);
 }
 
 export async function saveProduct(product) {
