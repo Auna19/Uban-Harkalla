@@ -16,6 +16,13 @@ export function CartProvider({ children }) {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [discountCode, setDiscountCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [cartNotification, setCartNotification] = useState(null);
+  const notificationTimerRef = React.useRef(null);
+
+  const dismissNotification = useCallback(() => {
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    setCartNotification(null);
+  }, []);
 
   // Persist to storage
   useEffect(() => {
@@ -42,10 +49,25 @@ export function CartProvider({ children }) {
     const variationDetails = variation && variation.attributes
       ? Object.entries(variation.attributes)
           .map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`)
-          .join(' | ')
+          .join(' • ')
       : '';
 
     const image = (variation && variation.image_url) || (product.images && product.images[0]) || product.image_url || '/Logo.jpg';
+
+    // Trigger instant notification display for user
+    setCartNotification({
+      id: Date.now(),
+      productName: product.name,
+      productImage: image,
+      variationDetails,
+      unitPrice,
+      quantity,
+    });
+
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    notificationTimerRef.current = setTimeout(() => {
+      setCartNotification(null);
+    }, 5000);
 
     setItems((prevItems) => {
       const existingIdx = prevItems.findIndex((i) => i.id === itemId);
@@ -182,6 +204,8 @@ export function CartProvider({ children }) {
         removeFromCart,
         clearCart,
         applyPromoCode,
+        cartNotification,
+        dismissNotification,
       }}
     >
       {children}

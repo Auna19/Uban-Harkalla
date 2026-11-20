@@ -8,6 +8,7 @@ import { CartProvider } from './context/CartContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import AudioController from './components/common/AudioController';
+import CartNotificationToast from './components/common/CartNotificationToast';
 
 // Public Pages
 import HomePage from './pages/public/HomePage';
@@ -70,6 +71,7 @@ function AppLayout({ children }) {
       <main className="flex-1">{children}</main>
       {!isAdminRoute && <Footer />}
       <AudioController />
+      <CartNotificationToast />
     </div>
   );
 }

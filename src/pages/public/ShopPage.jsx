@@ -69,6 +69,37 @@ export default function ShopPage() {
     };
   }, []);
 
+  const matchCategory = (p, catIdentifier) => {
+    if (!catIdentifier || catIdentifier === 'all') return true;
+    const catObj = categories.find((c) => c.id === catIdentifier || c.slug === catIdentifier);
+
+    if (p.category_id && p.category_id === catIdentifier) return true;
+    if (catObj?.slug && p.category_id === catObj.slug) return true;
+
+    const catName = (catObj?.name || catIdentifier).toLowerCase();
+    const catSlug = (catObj?.slug || catIdentifier).toLowerCase();
+    const pCatName = (p.category_name || '').toLowerCase();
+    const pSlug = (p.slug || '').toLowerCase();
+    const pBrand = (p.brand_name || '').toLowerCase();
+
+    if (catSlug.includes('iphone') || catName.includes('iphone') || catIdentifier === 'cat-1') {
+      return (p.category_id === 'cat-1' || pCatName.includes('iphone') || pSlug.includes('iphone') || p.name.toLowerCase().includes('iphone')) && !pSlug.includes('airpods');
+    }
+    if (catSlug.includes('android') || catName.includes('android') || catIdentifier === 'cat-2') {
+      return (p.category_id === 'cat-2' || pCatName.includes('android') || pBrand === 'samsung' || pBrand === 'google' || pBrand === 'xiaomi') && !pSlug.includes('iphone') && pBrand !== 'apple';
+    }
+    if (catSlug.includes('gadget') || catName.includes('gadget') || catIdentifier === 'cat-3') {
+      return p.category_id === 'cat-3' || pCatName.includes('gadget') || pSlug.includes('airpods') || pSlug.includes('audio') || pSlug.includes('freepods');
+    }
+    if (catSlug.includes('accessor') || catName.includes('accessor') || catIdentifier === 'cat-4') {
+      return p.category_id === 'cat-4' || pCatName.includes('accessor') || pSlug.includes('charger') || pSlug.includes('powerbank') || pSlug.includes('adapter');
+    }
+
+    if (catName && pCatName === catName) return true;
+    if (catSlug && pSlug.includes(catSlug)) return true;
+    return false;
+  };
+
   // Filter and sort computation
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -84,12 +115,7 @@ export default function ShopPage() {
 
     // Category
     if (selectedCategory && selectedCategory !== 'all') {
-      result = result.filter(
-        (p) =>
-          p.category_id === selectedCategory ||
-          p.category_name?.toLowerCase() === selectedCategory.toLowerCase() ||
-          p.slug?.toLowerCase().includes(selectedCategory.toLowerCase())
-      );
+      result = result.filter((p) => matchCategory(p, selectedCategory));
     }
 
     // Brand

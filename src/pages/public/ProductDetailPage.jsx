@@ -214,6 +214,29 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleBack = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const fromAdmin =
+      searchParams.get('from') === 'admin' ||
+      location.state?.from === 'admin' ||
+      (document.referrer && document.referrer.includes('/admin'));
+
+    // 1. If tab has session history inside the application
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+      return;
+    }
+
+    // 2. If opened from admin products page (e.g. in a new tab)
+    if (fromAdmin) {
+      navigate('/admin/products');
+      return;
+    }
+
+    // 3. Fallback: navigate to shop catalogue
+    navigate('/shop');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -250,7 +273,7 @@ export default function ProductDetailPage() {
         {/* Breadcrumb Navigation */}
         <div className="mb-6 flex items-center justify-between">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-700 transition-colors group cursor-pointer"
           >
             <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-2xs group-hover:bg-emerald-50 group-hover:border-emerald-200 transition-colors">

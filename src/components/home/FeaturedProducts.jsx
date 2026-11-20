@@ -7,13 +7,43 @@ import ScrollReveal from '../common/ScrollReveal';
 export default function FeaturedProducts({ products, categories }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const matchCategory = (p, cat) => {
+    if (!cat) return false;
+    const catId = typeof cat === 'string' ? cat : cat.id;
+    const catObj = typeof cat === 'object' ? cat : categories.find((c) => c.id === catId || c.slug === catId);
+
+    if (p.category_id && p.category_id === catId) return true;
+    if (catObj?.slug && p.category_id === catObj.slug) return true;
+
+    const catName = (catObj?.name || '').toLowerCase();
+    const catSlug = (catObj?.slug || '').toLowerCase();
+    const pCatName = (p.category_name || '').toLowerCase();
+    const pSlug = (p.slug || '').toLowerCase();
+    const pBrand = (p.brand_name || '').toLowerCase();
+
+    // Specific category checks
+    if (catSlug.includes('iphone') || catName.includes('iphone') || catId === 'cat-1') {
+      return (p.category_id === 'cat-1' || pCatName.includes('iphone') || pSlug.includes('iphone') || p.name.toLowerCase().includes('iphone')) && !pSlug.includes('airpods');
+    }
+    if (catSlug.includes('android') || catName.includes('android') || catId === 'cat-2') {
+      return (p.category_id === 'cat-2' || pCatName.includes('android') || pBrand === 'samsung' || pBrand === 'google' || pBrand === 'xiaomi') && !pSlug.includes('iphone') && pBrand !== 'apple';
+    }
+    if (catSlug.includes('gadget') || catName.includes('gadget') || catId === 'cat-3') {
+      return p.category_id === 'cat-3' || pCatName.includes('gadget') || pSlug.includes('airpods') || pSlug.includes('audio') || pSlug.includes('freepods');
+    }
+    if (catSlug.includes('accessor') || catName.includes('accessor') || catId === 'cat-4') {
+      return p.category_id === 'cat-4' || pCatName.includes('accessor') || pSlug.includes('charger') || pSlug.includes('powerbank') || pSlug.includes('adapter');
+    }
+
+    if (catName && pCatName === catName) return true;
+    return false;
+  };
+
   const featured = products.filter((p) => p.is_featured);
   const displayList =
     selectedCategory === 'all'
       ? featured
-      : featured.filter(
-        (p) => p.category_id === selectedCategory || p.category_name?.toLowerCase() === selectedCategory.toLowerCase()
-      );
+      : featured.filter((p) => matchCategory(p, selectedCategory));
 
   return (
     <section className="py-20 sm:py-24 bg-gradient-to-b from-slate-50 via-white to-slate-50 relative overflow-hidden">
@@ -62,7 +92,7 @@ export default function FeaturedProducts({ products, categories }) {
               All Featured ({featured.length})
             </button>
             {categories.map((cat) => {
-              const count = featured.filter(p => p.category_id === cat.id || p.category_name?.toLowerCase() === cat.name?.toLowerCase()).length;
+              const count = featured.filter((p) => matchCategory(p, cat)).length;
               return (
                 <button
                   key={cat.id}

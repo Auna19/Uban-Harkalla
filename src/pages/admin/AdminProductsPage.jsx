@@ -229,7 +229,8 @@ export default function AdminProductsPage() {
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          to={`/product/${prod.slug}`}
+                          to={`/product/${prod.slug}?from=admin`}
+                          state={{ from: 'admin' }}
                           target="_blank"
                           className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
                           title="View on Storefront"
