@@ -51,7 +51,7 @@ export default function ConfirmationModal({
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-7 z-10 animate-in zoom-in-95 duration-200 text-left">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-7 z-10 animate-in zoom-in-95 duration-200 text-left overflow-hidden">
         
         {/* Close Button */}
         <button
@@ -59,7 +59,7 @@ export default function ConfirmationModal({
           onClick={onClose}
           disabled={loading}
           aria-label="Close modal"
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors z-20 cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -80,16 +80,16 @@ export default function ConfirmationModal({
             )}
           </div>
 
-          <div className="flex-1 pr-6">
+          <div className="flex-1 min-w-0 pr-8">
             <h3 id="confirm-modal-title" className="text-lg font-extrabold text-slate-900 tracking-tight">
               {title}
             </h3>
             {itemName && (
-              <p className="mt-1 text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg w-fit truncate max-w-full">
+              <div className="mt-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-xl break-words leading-relaxed max-w-full">
                 "{itemName}"
-              </p>
+              </div>
             )}
-            <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed break-words">
               {message}
             </p>
           </div>

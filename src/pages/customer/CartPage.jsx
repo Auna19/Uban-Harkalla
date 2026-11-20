@@ -34,11 +34,12 @@ export default function CartPage() {
   });
 
   const handleOpenRemoveItem = (item) => {
+    const displayName = item.name || item.product_name || 'Selected Item';
     setConfirmModal({
       isOpen: true,
       type: 'item',
       itemId: item.id,
-      itemName: `${item.product_name}${item.variation_details ? ` (${item.variation_details})` : ''}`,
+      itemName: `${displayName}${item.variation_details ? ` (${item.variation_details})` : ''}`,
     });
   };
 
