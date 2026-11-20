@@ -210,10 +210,12 @@ export default function AdminProductFormPage() {
       ? variations.reduce((sum, v) => sum + Number(v.stock_quantity || 0), 0)
       : Number(stockQuantity);
 
+    const cleanSlug = (slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || `prod-${Date.now()}`;
+
     const payload = {
       id: isEditing ? id : undefined,
       name,
-      slug,
+      slug: cleanSlug,
       brand_id: brandId,
       brand_name: selectedBrandObj?.name || 'Original',
       category_id: categoryId,
@@ -268,33 +270,18 @@ export default function AdminProductFormPage() {
             1. Core Specifications & Category
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
-                Product Title *
-              </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={handleNameChange}
-                placeholder="e.g. Apple iPhone 15 Pro Max"
-                className="w-full text-xs font-semibold rounded-xl px-4 py-2.5 bg-slate-900 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
-                URL Slug *
-              </label>
-              <input
-                type="text"
-                required
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                className="w-full text-xs font-mono rounded-xl px-4 py-2.5 bg-slate-900 border border-slate-700 text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              Product Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={handleNameChange}
+              placeholder="e.g. Apple iPhone 15 Pro Max"
+              className="w-full text-xs font-semibold rounded-xl px-4 py-2.5 bg-slate-900 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -55,9 +55,11 @@ export default function AdminCategoriesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const cleanSlug = (form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || `cat-${Date.now()}`;
     await saveCategory({
       id: editingCat?.id,
       ...form,
+      slug: cleanSlug,
     });
     setShowModal(false);
     load();
@@ -156,26 +158,17 @@ export default function AdminCategoriesPage() {
                 <input
                   type="text"
                   required
+                  placeholder="e.g. iPhones, Android Phones, Accessories"
                   value={form.name}
                   onChange={(e) => {
+                    const newName = e.target.value;
                     setForm({
                       ...form,
-                      name: e.target.value,
-                      slug: editingCat ? form.slug : e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                      name: newName,
+                      slug: editingCat?.slug || newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
                     });
                   }}
-                  className="w-full text-xs rounded-xl px-3 py-2 bg-slate-900 border border-slate-700 text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Slug *</label>
-                <input
-                  type="text"
-                  required
-                  value={form.slug}
-                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  className="w-full text-xs font-mono rounded-xl px-3 py-2 bg-slate-900 border border-slate-700 text-slate-300"
+                  className="w-full text-xs rounded-xl px-3.5 py-2.5 bg-slate-900 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
