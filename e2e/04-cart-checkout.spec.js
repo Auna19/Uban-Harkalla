@@ -50,9 +50,18 @@ test.describe('Module 4: Cart Management & Checkout Order Flow', () => {
     await page.locator('input[placeholder*="Nassarawa GRA"]').fill('Kano Metropolis');
     await page.locator('input[placeholder*="Zoo Road"]').fill('No. 1 Test Lab Road');
 
-    // Select payment method radio
-    const bankRadio = page.locator('input[type="radio"]').nth(1);
-    await bankRadio.check();
+    // Select payment method radio: Pay on Delivery or Bank Transfer with Session ID
+    const radios = page.locator('input[type="radio"]');
+    const radioCount = await radios.count();
+    if (radioCount >= 3) {
+      await radios.nth(2).check(); // Pay on Delivery
+    } else {
+      await radios.nth(1).check(); // Bank Transfer
+      const sessionInput = page.locator('input[placeholder*="100004928472910"]');
+      if (await sessionInput.isVisible()) {
+        await sessionInput.fill('TXN-' + Date.now());
+      }
+    }
 
     // Submit order
     const orderBtn = page.getByRole('button', { name: /Confirm & Place Order/i });

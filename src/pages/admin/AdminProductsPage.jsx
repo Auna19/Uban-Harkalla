@@ -135,135 +135,154 @@ export default function AdminProductsPage() {
 
       {/* Products Table */}
       <div className="bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="text-slate-500 uppercase tracking-wider border-b border-slate-800 bg-slate-950/80">
-                <th className="py-3 px-4 font-semibold">Product</th>
-                <th className="py-3 px-4 font-semibold">Brand / Category</th>
-                <th className="py-3 px-4 font-semibold">Base Price</th>
-                <th className="py-3 px-4 font-semibold">Variations</th>
-                <th className="py-3 px-4 font-semibold">Stock</th>
-                <th className="py-3 px-4 font-semibold">Featured</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/80 text-slate-300">
-              {filtered.map((prod) => {
-                const img = (prod.images && prod.images[0]) || prod.image_url || '/Logo.jpg';
-                const varCount = prod.variations?.length || 0;
-                const isLowStock = (prod.stock_quantity || 0) <= 5;
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+            <p className="text-xs">Loading product inventory...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-20 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-500">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-white">No Products Found</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              {searchTerm || selectedCat !== 'all'
+                ? 'No products match your current search or category filter.'
+                : 'Click "Add New Product" to create your first smartphone listing.'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="text-slate-500 uppercase tracking-wider border-b border-slate-800 bg-slate-950/80">
+                  <th className="py-3 px-4 font-semibold">Product</th>
+                  <th className="py-3 px-4 font-semibold">Brand / Category</th>
+                  <th className="py-3 px-4 font-semibold">Base Price</th>
+                  <th className="py-3 px-4 font-semibold">Variations</th>
+                  <th className="py-3 px-4 font-semibold">Stock</th>
+                  <th className="py-3 px-4 font-semibold">Featured</th>
+                  <th className="py-3 px-4 font-semibold">Status</th>
+                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                {filtered.map((prod) => {
+                  const img = (prod.images && prod.images[0]) || prod.image_url || '/Logo.jpg';
+                  const varCount = prod.variations?.length || 0;
+                  const isLowStock = (prod.stock_quantity || 0) <= 5;
 
-                return (
-                  <tr key={prod.id} className="hover:bg-slate-900/60 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={img}
-                          alt=""
-                          className="w-10 h-10 rounded-xl object-cover border border-slate-800 shrink-0"
-                        />
-                        <div className="max-w-[200px] truncate">
-                          <span className="font-bold text-white block truncate">{prod.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{prod.slug}</span>
+                  return (
+                    <tr key={prod.id} className="hover:bg-slate-900/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={img}
+                            alt=""
+                            className="w-10 h-10 rounded-xl object-cover border border-slate-800 shrink-0"
+                          />
+                          <div className="max-w-[200px] truncate">
+                            <span className="font-bold text-white block truncate">{prod.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{prod.slug}</span>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <p className="font-bold text-slate-200">{prod.brand_name || 'Original'}</p>
-                      <p className="text-[10px] text-slate-400">{prod.category_name}</p>
-                    </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <p className="font-bold text-slate-200">{prod.brand_name || 'Original'}</p>
+                        <p className="text-[10px] text-slate-400">{prod.category_name}</p>
+                      </td>
 
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="font-black text-emerald-400">
-                        ₦{(prod.discounted_price || prod.base_price).toLocaleString()}
-                      </div>
-                      {prod.discounted_price && (
-                        <div className="text-[10px] text-slate-500 line-through">
-                          ₦{prod.base_price.toLocaleString()}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="font-black text-emerald-400">
+                          ₦{(prod.discounted_price || prod.base_price).toLocaleString()}
                         </div>
-                      )}
-                    </td>
+                        {prod.discounted_price && (
+                          <div className="text-[10px] text-slate-500 line-through">
+                            ₦{prod.base_price.toLocaleString()}
+                          </div>
+                        )}
+                      </td>
 
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px] font-semibold">
-                        {varCount} variations
-                      </span>
-                    </td>
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px] font-semibold">
+                          {varCount} variations
+                        </span>
+                      </td>
 
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span
-                        className={`font-bold ${prod.stock_quantity === 0
-                          ? 'text-red-400'
-                          : isLowStock
-                            ? 'text-amber-400'
-                            : 'text-emerald-400'
-                          }`}
-                      >
-                        {prod.stock_quantity} units
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleFeatured(prod)}
-                        className={`p-1.5 rounded-lg transition-colors ${prod.is_featured
-                          ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
-                          : 'text-slate-600 hover:text-slate-400'
-                          }`}
-                        title="Toggle Featured"
-                      >
-                        <Star className={`w-4 h-4 ${prod.is_featured ? 'fill-amber-400' : ''}`} />
-                      </button>
-                    </td>
-
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleActive(prod)}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${prod.is_active !== false
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                          : 'bg-slate-800 text-slate-400'
-                          }`}
-                      >
-                        {prod.is_active !== false ? 'Active' : 'Draft'}
-                      </button>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/product/${prod.slug}?from=admin`}
-                          state={{ from: 'admin' }}
-                          target="_blank"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-                          title="View on Storefront"
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span
+                          className={`font-bold ${prod.stock_quantity === 0
+                            ? 'text-red-400'
+                            : isLowStock
+                              ? 'text-amber-400'
+                              : 'text-emerald-400'
+                            }`}
                         >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                        <Link
-                          to={`/admin/products/${prod.id}`}
-                          className="p-1.5 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-slate-800"
-                          title="Edit Product & Variations"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
+                          {prod.stock_quantity} units
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <button
-                          onClick={() => setDeleteTarget(prod)}
-                          className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-slate-800"
-                          title="Delete Product"
+                          onClick={() => handleToggleFeatured(prod)}
+                          className={`p-1.5 rounded-lg transition-colors ${prod.is_featured
+                            ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
+                            : 'text-slate-600 hover:text-slate-400'
+                            }`}
+                          title="Toggle Featured"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Star className={`w-4 h-4 ${prod.is_featured ? 'fill-amber-400' : ''}`} />
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleActive(prod)}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${prod.is_active !== false
+                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                            : 'bg-slate-800 text-slate-400'
+                            }`}
+                        >
+                          {prod.is_active !== false ? 'Active' : 'Draft'}
+                        </button>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/product/${prod.slug}?from=admin`}
+                            state={{ from: 'admin' }}
+                            target="_blank"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                            title="View on Storefront"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
+                          <Link
+                            to={`/admin/products/${prod.id}`}
+                            className="p-1.5 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-slate-800"
+                            title="Edit Product & Variations"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => setDeleteTarget(prod)}
+                            className="p-1.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-slate-800"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal for Product Deletion */}

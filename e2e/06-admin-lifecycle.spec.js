@@ -27,6 +27,7 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     await expect(page.locator('h1')).toContainText(/Product Inventory/i);
 
     const rows = page.locator('tbody tr');
+    await expect(rows.first()).toBeVisible({ timeout: 20000 });
     const rowCount = await rows.count();
     expect(rowCount).toBeGreaterThan(0);
 
@@ -44,6 +45,7 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     await expect(page.locator('h1')).toContainText(/Customer Orders/i);
 
     const rows = page.locator('tbody tr');
+    await expect(rows.first()).toBeVisible({ timeout: 20000 });
     expect(await rows.count()).toBeGreaterThan(0);
   });
 
@@ -51,8 +53,9 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     await page.goto('/admin/customers');
     await expect(page.locator('h1')).toContainText(/Customer/i);
 
-    // Should list customers
+    // Wait for customer rows to be loaded from database
     const rows = page.locator('tbody tr');
+    await expect(rows.first()).toBeVisible({ timeout: 20000 });
     expect(await rows.count()).toBeGreaterThan(0);
   });
 });

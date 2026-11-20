@@ -448,7 +448,17 @@ export default function ShopPage() {
               )}
             </div>
 
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((idx) => (
+                  <div key={idx} className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 animate-pulse">
+                    <div className="bg-slate-200 aspect-square rounded-2xl w-full"></div>
+                    <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+                    <div className="h-5 bg-slate-200 rounded w-1/3"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                   <Search className="w-8 h-8" />
