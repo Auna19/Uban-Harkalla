@@ -19,6 +19,7 @@ import {
   Zap,
   Check,
   ChevronRight,
+  MessageCircle,
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -123,10 +124,10 @@ export default function ProductDetailPage() {
   // When matched variation changes, update image if variation has custom image, otherwise retain or reset to primary
   useEffect(() => {
     if (!product) return;
-    if (matchedVariation && matchedVariation.has_custom_image && matchedVariation.image_url) {
+    const primary = (product.images && product.images[0]) || product.image_url || '/1001102628.jpg';
+    if (matchedVariation && (matchedVariation.has_custom_image || (matchedVariation.image_url && matchedVariation.image_url !== primary))) {
       setActiveImage(matchedVariation.image_url);
     } else {
-      const primary = (product.images && product.images[0]) || product.image_url || '/1001102628.jpg';
       setActiveImage(primary);
     }
   }, [matchedVariation, product]);
@@ -481,6 +482,28 @@ export default function ProductDetailPage() {
                   </span>
                 </button>
               </div>
+
+              {/* Order via WhatsApp CTA */}
+              {(() => {
+                const variantDetails = Object.entries(selectedAttributes || {})
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join(', ');
+                const specsSummary = variantDetails ? ` (${variantDetails})` : '';
+                const waMessage = `Hello UBAN HARKALLA, I want to order ${product.name}${specsSummary} at ₦${currentPrice.toLocaleString()}. Please confirm availability.`;
+                const waUrl = `https://wa.me/2348123456789?text=${encodeURIComponent(waMessage)}`;
+
+                return (
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 px-4 rounded-xl font-bold text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
+                  >
+                    <MessageCircle className="w-4 h-4 text-emerald-600" />
+                    <span>Order via WhatsApp</span>
+                  </a>
+                );
+              })()}
 
               {/* Guarantees Box */}
               <div className="pt-2 grid grid-cols-2 gap-3 text-xs text-slate-600">

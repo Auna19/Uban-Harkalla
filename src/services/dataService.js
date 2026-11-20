@@ -713,6 +713,54 @@ export async function createOrderAtomic(orderPayload) {
   const updatedOrders = [newOrder, ...orders];
   saveStoredData(STORAGE_KEYS.ORDERS, updatedOrders);
 
+  // Sync with Neon database: decrement stock & persist order
+  if (isNeonConfigured && sql) {
+    try {
+      for (const mItem of orderPayload.items) {
+        if (mItem.variation_id) {
+          await sql`
+            UPDATE product_variations
+            SET stock_quantity = GREATEST(0, stock_quantity - ${mItem.quantity})
+            WHERE id::text = ${String(mItem.variation_id)}
+          `;
+        }
+        await sql`
+          UPDATE products
+          SET stock_quantity = GREATEST(0, stock_quantity - ${mItem.quantity})
+          WHERE id::text = ${String(mItem.product_id)}
+        `;
+      }
+
+      await sql`
+        INSERT INTO orders (
+          order_reference, customer_name, customer_email, customer_phone,
+          delivery_method, delivery_state, delivery_address, delivery_fee,
+          subtotal_amount, discount_amount, total_amount, payment_method,
+          payment_status, order_status, notes, items
+        ) VALUES (
+          ${newOrder.order_reference},
+          ${newOrder.customer_name},
+          ${newOrder.customer_email},
+          ${newOrder.customer_phone},
+          ${newOrder.delivery_method === 'pickup' ? 'physical_pickup' : 'door_delivery'},
+          ${newOrder.delivery_state || 'Kano'},
+          ${newOrder.delivery_address || ''},
+          ${newOrder.delivery_fee || 0},
+          ${newOrder.subtotal || 0},
+          ${newOrder.discount || 0},
+          ${newOrder.total_amount || 0},
+          ${newOrder.payment_method === 'card' ? 'paystack' : (newOrder.payment_method || 'bank_transfer')},
+          ${newOrder.payment_status === 'verified' ? 'Paid' : 'Pending'},
+          ${newOrder.order_status},
+          ${newOrder.delivery_notes || ''},
+          ${JSON.stringify(newOrder.items)}::jsonb
+        )
+      `;
+    } catch (neonErr) {
+      console.warn('Neon order atomic persistence warning:', neonErr);
+    }
+  }
+
   // Create notifications
   addNotification({
     user_id: newOrder.user_id,
@@ -751,6 +799,62 @@ export async function updateOrderStatus(orderId, newStatus, notes = '', adminNam
   });
 
   saveStoredData(STORAGE_KEYS.ORDERS, updatedOrders);
+
+  // Atomic Stock Restoration if Order Cancelled
+  if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+    const prods = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+    const restoredProducts = prods.map((prod) => {
+      const match = target.items?.filter((i) => i.product_id === prod.id) || [];
+      if (!match.length) return prod;
+      let pCopy = { ...prod };
+      for (const item of match) {
+        if (item.variation_id && pCopy.variations) {
+          pCopy.variations = pCopy.variations.map((v) => {
+            if (v.id === item.variation_id) {
+              return { ...v, stock_quantity: (v.stock_quantity || 0) + (item.quantity || 1) };
+            }
+            return v;
+          });
+        }
+        pCopy.stock_quantity = (pCopy.stock_quantity || 0) + (item.quantity || 1);
+      }
+      return pCopy;
+    });
+    saveStoredData(STORAGE_KEYS.PRODUCTS, restoredProducts);
+
+    if (isNeonConfigured && sql) {
+      try {
+        for (const item of target.items || []) {
+          if (item.variation_id) {
+            await sql`
+              UPDATE product_variations
+              SET stock_quantity = stock_quantity + ${item.quantity || 1}
+              WHERE id::text = ${String(item.variation_id)}
+            `;
+          }
+          await sql`
+            UPDATE products
+            SET stock_quantity = stock_quantity + ${item.quantity || 1}
+            WHERE id::text = ${String(item.product_id)}
+          `;
+        }
+      } catch (err) {
+        console.warn('Neon stock restoration warning:', err);
+      }
+    }
+  }
+
+  if (isNeonConfigured && sql) {
+    try {
+      await sql`
+        UPDATE orders
+        SET order_status = ${newStatus}, updated_at = CURRENT_TIMESTAMP
+        WHERE order_reference = ${target.order_reference}
+      `;
+    } catch (err) {
+      console.warn('Neon order status update warning:', err);
+    }
+  }
 
   // Notify customer
   addNotification({
