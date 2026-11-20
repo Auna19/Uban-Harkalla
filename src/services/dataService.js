@@ -47,6 +47,15 @@ function saveStoredData(key, data) {
     window.dispatchEvent(new CustomEvent('ubh-data-changed', { detail: { key } }));
   } catch (err) {
     console.error(`Error saving ${key} to storage:`, err);
+    if (err && (err.name === 'QuotaExceededError' || err.code === 22)) {
+      try {
+        localStorage.removeItem('ubh_notifications');
+        localStorage.setItem(key, JSON.stringify(data));
+        window.dispatchEvent(new CustomEvent('ubh-data-changed', { detail: { key } }));
+      } catch (retryErr) {
+        console.error('Storage quota exceeded on retry:', retryErr);
+      }
+    }
   }
 }
 
@@ -284,19 +293,41 @@ export async function getProductById(id) {
 export async function saveProduct(product) {
   const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
   const normalizedPrimaryImage = (product.images && product.images[0]) || product.image_url || '/1001102628.jpg';
+
+  // Ensure variations inherit the primary image unless explicitly customized
+  const normalizedVariations = (product.variations || []).map((v) => {
+    if (v.has_custom_image === false) {
+      return { ...v, image_url: normalizedPrimaryImage, has_custom_image: false };
+    }
+    if (v.has_custom_image === true) {
+      return v;
+    }
+    // If undefined: if an explicit non-placeholder image_url is provided, preserve as custom
+    if (v.image_url && v.image_url !== '/1001102628.jpg' && v.image_url !== normalizedPrimaryImage) {
+      return { ...v, has_custom_image: true };
+    }
+    return { ...v, image_url: normalizedPrimaryImage, has_custom_image: false };
+  });
+
   const productWithImages = {
     ...product,
     image_url: normalizedPrimaryImage,
     images: product.images && product.images.length > 0 ? product.images : [normalizedPrimaryImage],
+    variations: normalizedVariations,
   };
 
   let updated;
-  if (product.id) {
-    updated = current.map((p) => (p.id === product.id ? { ...p, ...productWithImages, updated_at: new Date().toISOString() } : p));
+  const isExisting = current.some((p) => p.id === product.id || (product.slug && p.slug === product.slug));
+  if (product.id && isExisting) {
+    updated = current.map((p) =>
+      p.id === product.id || (product.slug && p.slug === product.slug)
+        ? { ...p, ...productWithImages, updated_at: new Date().toISOString() }
+        : p
+    );
   } else {
     const newProduct = {
       ...productWithImages,
-      id: `prod-${Date.now()}`,
+      id: product.id || `prod-${Date.now()}`,
       slug: product.slug || product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

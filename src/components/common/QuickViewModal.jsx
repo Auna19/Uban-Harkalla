@@ -53,9 +53,10 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
   }, [product, selectedAttributes]);
 
   const activeImage =
-    (matchedVariation && matchedVariation.image_url) ||
+    (matchedVariation && matchedVariation.has_custom_image && matchedVariation.image_url) ||
     (product.images && product.images[0]) ||
     product.image_url ||
+    (matchedVariation && matchedVariation.image_url) ||
     '/1001102628.jpg';
 
   const currentPrice = matchedVariation

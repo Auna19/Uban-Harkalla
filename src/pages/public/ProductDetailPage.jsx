@@ -62,7 +62,6 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     async function loadProduct() {
-      setLoading(true);
       try {
         const found = await getProductBySlug(slug);
         if (found) {
@@ -87,6 +86,22 @@ export default function ProductDetailPage() {
       }
     }
     loadProduct();
+
+    const handleDataChanged = (e) => {
+      if (!e.detail?.key || e.detail.key === 'ubh_products') {
+        loadProduct();
+      }
+    };
+
+    window.addEventListener('ubh-data-changed', handleDataChanged);
+    window.addEventListener('storage', handleDataChanged);
+    window.addEventListener('focus', loadProduct);
+
+    return () => {
+      window.removeEventListener('ubh-data-changed', handleDataChanged);
+      window.removeEventListener('storage', handleDataChanged);
+      window.removeEventListener('focus', loadProduct);
+    };
   }, [slug]);
 
   // Compute matched variation based on current selected attributes
@@ -105,12 +120,16 @@ export default function ProductDetailPage() {
     return matched || product.variations[0];
   }, [product, selectedAttributes]);
 
-  // When matched variation changes, update image if variation has custom image
+  // When matched variation changes, update image if variation has custom image, otherwise retain or reset to primary
   useEffect(() => {
-    if (matchedVariation && matchedVariation.image_url) {
+    if (!product) return;
+    if (matchedVariation && matchedVariation.has_custom_image && matchedVariation.image_url) {
       setActiveImage(matchedVariation.image_url);
+    } else {
+      const primary = (product.images && product.images[0]) || product.image_url || '/1001102628.jpg';
+      setActiveImage(primary);
     }
-  }, [matchedVariation]);
+  }, [matchedVariation, product]);
 
   // Calculate pricing & stock based on matched variation
   const currentPrice = matchedVariation

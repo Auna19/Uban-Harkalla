@@ -53,6 +53,20 @@ export default function ShopPage() {
       }
     }
     loadShopData();
+
+    const handleDataChanged = () => {
+      loadShopData();
+    };
+
+    window.addEventListener('ubh-data-changed', handleDataChanged);
+    window.addEventListener('storage', handleDataChanged);
+    window.addEventListener('focus', handleDataChanged);
+
+    return () => {
+      window.removeEventListener('ubh-data-changed', handleDataChanged);
+      window.removeEventListener('storage', handleDataChanged);
+      window.removeEventListener('focus', handleDataChanged);
+    };
   }, []);
 
   // Filter and sort computation

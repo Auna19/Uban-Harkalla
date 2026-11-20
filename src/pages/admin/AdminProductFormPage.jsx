@@ -140,12 +140,21 @@ export default function AdminProductFormPage() {
     try {
       const processed = [];
       for (const file of files) {
-        const dataUrl = await processLocalImage(file, 1200, 0.85);
+        const dataUrl = await processLocalImage(file, 900, 0.78);
         processed.push(dataUrl);
       }
       setImageUrls((prev) => {
         const isPlaceholder = prev.length === 1 && prev[0] === '/1001102628.jpg';
-        return isPlaceholder ? processed : [...prev, ...processed];
+        const next = isPlaceholder ? processed : [...prev, ...processed];
+        if (next.length > 0) {
+          const newPrimary = next[0];
+          setVariations((prevVars) =>
+            prevVars.map((v) =>
+              v.has_custom_image ? v : { ...v, image_url: newPrimary }
+            )
+          );
+        }
+        return next;
       });
     } catch (err) {
       console.error('Image upload failed:', err);
@@ -161,22 +170,44 @@ export default function AdminProductFormPage() {
     setImageUrls((prev) => {
       const copy = [...prev];
       const [selected] = copy.splice(index, 1);
-      return [selected, ...copy];
+      const next = [selected, ...copy];
+      setVariations((prevVars) =>
+        prevVars.map((v) =>
+          v.has_custom_image ? v : { ...v, image_url: selected }
+        )
+      );
+      return next;
     });
   };
 
   const handleRemoveProductImage = (index) => {
     setImageUrls((prev) => {
       const next = prev.filter((_, i) => i !== index);
-      return next.length > 0 ? next : ['/1001102628.jpg'];
+      const finalImages = next.length > 0 ? next : ['/1001102628.jpg'];
+      const newPrimary = finalImages[0];
+      setVariations((prevVars) =>
+        prevVars.map((v) =>
+          v.has_custom_image ? v : { ...v, image_url: newPrimary }
+        )
+      );
+      return finalImages;
     });
   };
 
   const handleAddCustomImageUrl = () => {
     if (!newImageUrl.trim()) return;
+    const url = newImageUrl.trim();
     setImageUrls((prev) => {
       const isPlaceholder = prev.length === 1 && prev[0] === '/1001102628.jpg';
-      return isPlaceholder ? [newImageUrl.trim()] : [...prev, newImageUrl.trim()];
+      const next = isPlaceholder ? [url] : [...prev, url];
+      if (isPlaceholder) {
+        setVariations((prevVars) =>
+          prevVars.map((v) =>
+            v.has_custom_image ? v : { ...v, image_url: url }
+          )
+        );
+      }
+      return next;
     });
     setNewImageUrl('');
   };
@@ -185,8 +216,16 @@ export default function AdminProductFormPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const dataUrl = await processLocalImage(file, 1000, 0.85);
-      handleUpdateVariation(idx, 'image_url', dataUrl);
+      const dataUrl = await processLocalImage(file, 900, 0.78);
+      setVariations((prev) => {
+        const copy = [...prev];
+        copy[idx] = {
+          ...copy[idx],
+          image_url: dataUrl,
+          has_custom_image: true,
+        };
+        return copy;
+      });
     } catch (err) {
       console.error('Variation image upload failed:', err);
       alert('Failed to process variation image file.');
@@ -196,7 +235,16 @@ export default function AdminProductFormPage() {
   };
 
   const handleResetVariationImage = (idx) => {
-    handleUpdateVariation(idx, 'image_url', imageUrls[0] || '/1001102628.jpg');
+    const primary = imageUrls[0] || '/1001102628.jpg';
+    setVariations((prev) => {
+      const copy = [...prev];
+      copy[idx] = {
+        ...copy[idx],
+        image_url: primary,
+        has_custom_image: false,
+      };
+      return copy;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -211,6 +259,13 @@ export default function AdminProductFormPage() {
       : Number(stockQuantity);
 
     const cleanSlug = (slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || `prod-${Date.now()}`;
+    const primaryImage = imageUrls[0] || '/1001102628.jpg';
+
+    const normalizedVariations = variations.map((v) => ({
+      ...v,
+      has_custom_image: Boolean(v.has_custom_image),
+      image_url: v.has_custom_image ? v.image_url : primaryImage,
+    }));
 
     const payload = {
       id: isEditing ? id : undefined,
@@ -228,9 +283,9 @@ export default function AdminProductFormPage() {
       stock_quantity: calculatedTotalStock,
       is_featured: isFeatured,
       is_active: isActive,
-      image_url: imageUrls[0] || '/1001102628.jpg',
+      image_url: primaryImage,
       images: imageUrls,
-      variations,
+      variations: normalizedVariations,
     };
 
     await saveProduct(payload);
@@ -673,7 +728,7 @@ export default function AdminProductFormPage() {
                           Variation Image Asset
                         </span>
                         <span className="text-[10px] text-slate-400">
-                          {v.image_url && v.image_url !== (imageUrls[0] || '/1001102628.jpg')
+                          {v.has_custom_image
                             ? 'Custom variant photo selected'
                             : 'Inheriting primary product photo'}
                         </span>
@@ -695,7 +750,7 @@ export default function AdminProductFormPage() {
                         onChange={(e) => handleVariationImageUpload(idx, e)}
                         className="hidden"
                       />
-                      {v.image_url && v.image_url !== (imageUrls[0] || '/1001102628.jpg') && (
+                      {v.has_custom_image && (
                         <button
                           type="button"
                           onClick={() => handleResetVariationImage(idx)}

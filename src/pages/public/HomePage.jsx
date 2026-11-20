@@ -56,6 +56,20 @@ export default function HomePage() {
       }
     }
     loadData();
+
+    const handleDataChanged = () => {
+      loadData();
+    };
+
+    window.addEventListener('ubh-data-changed', handleDataChanged);
+    window.addEventListener('storage', handleDataChanged);
+    window.addEventListener('focus', handleDataChanged);
+
+    return () => {
+      window.removeEventListener('ubh-data-changed', handleDataChanged);
+      window.removeEventListener('storage', handleDataChanged);
+      window.removeEventListener('focus', handleDataChanged);
+    };
   }, []);
 
   return (
