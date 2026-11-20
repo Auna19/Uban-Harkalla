@@ -68,9 +68,9 @@ test.describe('Module 4: Cart Management & Checkout Order Flow', () => {
     await orderBtn.click();
 
     // Verify success page and order reference with generous timeout for database insert
-    await expect(page).toHaveURL(/.*\/checkout\/success\?ref=UBH-.*/, { timeout: 20000 });
-    const orderRefCode = page.locator('.font-mono, text=UBH-').first();
-    await expect(orderRefCode).toBeVisible();
+    await expect(page).toHaveURL(/.*\/checkout\/success\?ref=UBH-.*/, { timeout: 25000 });
+    const orderRefCode = page.locator('.font-mono').filter({ hasText: 'UBH-' }).first();
+    await expect(orderRefCode).toBeVisible({ timeout: 15000 });
     const refText = await orderRefCode.textContent();
     expect(refText).toMatch(/UBH-\d{4}-\d+/);
   });

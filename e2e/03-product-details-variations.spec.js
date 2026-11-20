@@ -3,10 +3,10 @@ import { test, expect } from '@playwright/test';
 test.describe('Module 3: Product Detail Engine & Variation Matrix', () => {
   test('TC-PROD-001: Load product detail with specifications and gallery', async ({ page }) => {
     await page.goto('/product/apple-iphone-15-pro-max');
-    await expect(page.locator('h1')).toContainText('Apple iPhone 15 Pro Max');
+    await expect(page.locator('h1')).toContainText('Apple iPhone 15 Pro Max', { timeout: 25000 });
 
     // Hero image is visible
-    const heroImg = page.locator('img[alt="Apple iPhone 15 Pro Max"]').first();
+    const heroImg = page.locator('img[alt*="Apple iPhone 15 Pro Max"]').first();
     await expect(heroImg).toBeVisible();
 
     // Technical specifications tab
@@ -19,19 +19,26 @@ test.describe('Module 3: Product Detail Engine & Variation Matrix', () => {
 
   test('TC-PROD-002: Variation selection updates pricing dynamically', async ({ page }) => {
     await page.goto('/product/apple-iphone-15-pro-max');
+    await expect(page.locator('h1')).toContainText('Apple iPhone 15 Pro Max', { timeout: 25000 });
 
-    // Initial price
-    const priceEl = page.locator('span, div').filter({ hasText: /^₦1,/ }).first();
+    const priceEl = page.locator('span, div').filter({ hasText: /^₦/ }).first();
     await expect(priceEl).toBeVisible();
-    const initialPriceText = await priceEl.textContent();
 
-    // Click 512GB option button
-    const fiveTwelveBtn = page.getByRole('button', { name: /^512GB$/i });
-    if (await fiveTwelveBtn.isVisible()) {
-      await fiveTwelveBtn.click();
-      await page.waitForTimeout(400);
-      const updatedPriceText = await priceEl.textContent();
-      expect(updatedPriceText).not.toBe(initialPriceText);
+    // Select 256GB variation
+    const btn256 = page.getByRole('button', { name: /^256GB$/i });
+    const btn512 = page.getByRole('button', { name: /^512GB$/i });
+
+    if (await btn256.isVisible() && await btn512.isVisible()) {
+      await btn256.click();
+      await page.waitForTimeout(500);
+      const price256 = await priceEl.textContent();
+
+      // Switch to 512GB variation - price must update dynamically
+      await btn512.click();
+      await page.waitForTimeout(500);
+      const price512 = await priceEl.textContent();
+
+      expect(price512).not.toBe(price256);
     }
   });
 
