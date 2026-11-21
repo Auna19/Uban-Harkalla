@@ -58,4 +58,58 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     await expect(rows.first()).toBeVisible({ timeout: 20000 });
     expect(await rows.count()).toBeGreaterThan(0);
   });
+
+  test('TC-ADM-005: Admin Products Page supports multiple selection checkboxes and bulk action controls', async ({ page }) => {
+    await page.goto('/admin/products');
+    await expect(page.locator('h1')).toContainText(/Product Inventory/i);
+
+    const rows = page.locator('tbody tr');
+    await expect(rows.first()).toBeVisible({ timeout: 20000 });
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThan(1);
+
+    // 1. Select the first two product checkboxes
+    const firstCheckbox = rows.nth(0).locator('input[type="checkbox"]');
+    const secondCheckbox = rows.nth(1).locator('input[type="checkbox"]');
+    await firstCheckbox.check();
+    await secondCheckbox.check();
+
+    // Verify bulk action banner appears with correct count
+    const bulkBanner = page.locator('text=/2 products selected/i');
+    await expect(bulkBanner).toBeVisible();
+
+    const deleteBtn = page.getByRole('button', { name: /Delete Selected \(2\)/i });
+    await expect(deleteBtn).toBeVisible();
+
+    // 2. Test Clear Selection
+    const clearBtn = page.getByRole('button', { name: /Clear Selection/i });
+    await clearBtn.click();
+    await expect(bulkBanner).not.toBeVisible();
+    expect(await firstCheckbox.isChecked()).toBe(false);
+    expect(await secondCheckbox.isChecked()).toBe(false);
+
+    // 3. Test Select All in Header
+    const selectAllCheckbox = page.locator('thead input[type="checkbox"]');
+    await selectAllCheckbox.check();
+    const selectAllBanner = page.locator(`text=/${rowCount} products selected/i`);
+    await expect(selectAllBanner).toBeVisible();
+
+    // Deselect all
+    await selectAllCheckbox.uncheck();
+    await expect(selectAllBanner).not.toBeVisible();
+
+    // 4. Test Bulk Delete Confirmation Modal
+    await firstCheckbox.check();
+    await secondCheckbox.check();
+    await deleteBtn.click();
+
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Delete 2 Products from Store\?/i);
+
+    // Click Cancel to dismiss safely without modifying base inventory
+    const cancelBtn = modal.getByRole('button', { name: /Cancel/i });
+    await cancelBtn.click();
+    await expect(modal).not.toBeVisible();
+  });
 });

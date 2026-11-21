@@ -417,6 +417,7 @@ The following **10 master end-to-end test cases** validate complete cross-page, 
 | **TC-INV-008** | Toggle product Active/Draft status | Positive | P1 | On `/admin/products` | 1. Click eye/status icon on product.<br>2. Observe status badge. | Click toggle status | Changes to "Draft". Product is immediately hidden from public storefront catalog. |
 | **TC-INV-009** | Create product with missing required fields | Negative | P1 | On `/admin/products/create` | 1. Leave Product Name empty.<br>2. Set Base Price to 0.<br>3. Click "Save Product". | Missing name | HTML5 and React validation prevent submission; flags "Please fill out this field." |
 | **TC-INV-010** | Delete product with confirmation modal | Positive | P0 | On `/admin/products` | 1. Click trash icon on target product.<br>2. Modal opens: "Delete Product Inventory".<br>3. Click "Yes, Delete Product". | Confirm deletion | Product and associated variations deleted from Neon DB. Success toast confirms deletion. Table refreshes. |
+| **TC-INV-011** | Multiple product selection checkboxes and bulk deletion | Positive | P1 | On `/admin/products` | 1. Select checkboxes for multiple products.<br>2. Observe bulk action banner displaying selected count.<br>3. Click "Delete Selected (N)".<br>4. Inspect confirmation modal with warning.<br>5. Confirm deletion. | Multiple product IDs | All selected products and variations are deleted from database. Toast confirms: "Successfully deleted N selected products!" Table refreshes and selections clear. |
 
 ---
 

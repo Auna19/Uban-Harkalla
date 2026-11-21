@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts, getCategories, deleteProduct, saveProduct } from '../../services/dataService';
+import { getProducts, getCategories, deleteProduct, deleteProducts, saveProduct } from '../../services/dataService';
 import {
   Smartphone,
   Plus,
@@ -12,6 +12,9 @@ import {
   Sliders,
   CheckCircle2,
   XCircle,
+  CheckSquare,
+  Square,
+  AlertTriangle,
 } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 import { useAdminToast } from '../../context/AdminToastContext';
@@ -48,6 +51,9 @@ export default function AdminProductsPage() {
     return true;
   });
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   const fetchProducts = async (showSpinner = false) => {
     if (showSpinner) setLoading(true);
@@ -72,10 +78,30 @@ export default function AdminProductsPage() {
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     const targetName = deleteTarget.name;
-    await deleteProduct(deleteTarget.id);
+    const targetId = deleteTarget.id;
+    await deleteProduct(targetId);
+    setSelectedIds((prev) => prev.filter((id) => id !== targetId));
     setDeleteTarget(null);
     showToast(`Product "${targetName}" deleted successfully!`, 'info');
     fetchProducts();
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setIsDeletingBulk(true);
+    try {
+      const count = selectedIds.length;
+      await deleteProducts(selectedIds);
+      setSelectedIds([]);
+      setIsBulkDeleteModalOpen(false);
+      showToast(`Successfully deleted ${count} selected product${count > 1 ? 's' : ''}!`, 'info');
+      fetchProducts();
+    } catch (err) {
+      console.error('Bulk deletion failed:', err);
+      showToast('Failed to delete selected products. Please try again.', 'error');
+    } finally {
+      setIsDeletingBulk(false);
+    }
   };
 
   const handleToggleFeatured = async (product) => {
@@ -107,6 +133,25 @@ export default function AdminProductsPage() {
     return matchSearch && matchCat;
   });
 
+  const isAllFilteredSelected =
+    filtered.length > 0 && filtered.every((p) => selectedIds.includes(p.id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllFilteredSelected) {
+      const filteredIdSet = new Set(filtered.map((p) => p.id));
+      setSelectedIds((prev) => prev.filter((id) => !filteredIdSet.has(id)));
+    } else {
+      const allFilteredIds = filtered.map((p) => p.id);
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...allFilteredIds])));
+    }
+  };
+
+  const handleToggleSelectRow = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <div className="space-y-6">
 
@@ -127,6 +172,36 @@ export default function AdminProductsPage() {
           <span>Add New Product</span>
         </Link>
       </div>
+
+      {/* Bulk Action Banner when 1 or more products are selected */}
+      {selectedIds.length > 0 && (
+        <div className="bg-gradient-to-r from-red-950/80 via-slate-900 to-red-950/80 border border-red-800/80 p-3.5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-red-950/20 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center justify-center bg-red-600 text-white font-extrabold px-2.5 py-0.5 rounded-full text-xs shadow-xs">
+              {selectedIds.length}
+            </span>
+            <span className="text-xs font-semibold text-red-200">
+              {selectedIds.length} product{selectedIds.length > 1 ? 's' : ''} selected
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition-colors"
+            >
+              Clear Selection
+            </button>
+            <button
+              onClick={() => setIsBulkDeleteModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-500 rounded-xl shadow-md transition-all active:scale-95"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -181,6 +256,15 @@ export default function AdminProductsPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="text-slate-500 uppercase tracking-wider border-b border-slate-800 bg-slate-950/80">
+                  <th className="py-3 px-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isAllFilteredSelected}
+                      onChange={handleToggleSelectAll}
+                      aria-label="Select all products"
+                      className="w-4 h-4 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500 accent-emerald-500 cursor-pointer"
+                    />
+                  </th>
                   <th className="py-3 px-4 font-semibold">Product</th>
                   <th className="py-3 px-4 font-semibold">Brand / Category</th>
                   <th className="py-3 px-4 font-semibold">Base Price</th>
@@ -196,9 +280,25 @@ export default function AdminProductsPage() {
                   const img = (prod.images && prod.images[0]) || prod.image_url || '/Logo.jpg';
                   const varCount = prod.variations?.length || 0;
                   const isLowStock = (prod.stock_quantity || 0) <= 5;
+                  const isSelected = selectedIds.includes(prod.id);
 
                   return (
-                    <tr key={prod.id} className="hover:bg-slate-900/60 transition-colors">
+                    <tr
+                      key={prod.id}
+                      className={`transition-colors ${
+                        isSelected ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-900/60'
+                      }`}
+                    >
+                      <td className="py-3.5 px-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelectRow(prod.id)}
+                          aria-label={`Select ${prod.name}`}
+                          className="w-4 h-4 rounded text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500 accent-emerald-500 cursor-pointer"
+                        />
+                      </td>
+
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <img
@@ -309,7 +409,7 @@ export default function AdminProductsPage() {
         )}
       </div>
 
-      {/* Confirmation Modal for Product Deletion */}
+      {/* Confirmation Modal for Single Product Deletion */}
       <ConfirmationModal
         isOpen={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
@@ -318,6 +418,17 @@ export default function AdminProductsPage() {
         message="Are you sure you want to delete this product? All configured attributes, variations, and photography mappings will be permanently removed from the storefront."
         itemName={deleteTarget?.name}
         confirmText="Delete Product"
+      />
+
+      {/* Confirmation Modal for Bulk Product Deletion */}
+      <ConfirmationModal
+        isOpen={isBulkDeleteModalOpen}
+        onClose={() => !isDeletingBulk && setIsBulkDeleteModalOpen(false)}
+        onConfirm={handleConfirmBulkDelete}
+        title={`Delete ${selectedIds.length} Products from Store?`}
+        message={`Are you sure you want to permanently delete the ${selectedIds.length} selected product${selectedIds.length > 1 ? 's' : ''}? All corresponding attributes, variations, and photography mappings will be removed.`}
+        itemName={`${selectedIds.length} selected products`}
+        confirmText={isDeletingBulk ? 'Deleting...' : `Delete ${selectedIds.length} Products`}
       />
 
     </div>

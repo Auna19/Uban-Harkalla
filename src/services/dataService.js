@@ -632,9 +632,32 @@ export async function deleteProduct(id) {
 
   if (isNeonConfigured && sql) {
     try {
+      await sql`DELETE FROM product_variations WHERE product_id::text = ${String(id)}`;
       await sql`DELETE FROM products WHERE id::text = ${String(id)} OR slug = ${String(id)}`;
     } catch (e) {
       console.warn('Neon product delete warning:', e);
+    }
+  }
+  return updated;
+}
+
+export async function deleteProducts(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const idSet = new Set(ids.map(String));
+  const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+  const updated = current.filter((p) => !idSet.has(String(p.id)) && !idSet.has(String(p.slug)));
+  saveStoredData(STORAGE_KEYS.PRODUCTS, updated);
+
+  if (isNeonConfigured && sql) {
+    try {
+      for (const id of ids) {
+        try {
+          await sql`DELETE FROM product_variations WHERE product_id::text = ${String(id)}`;
+          await sql`DELETE FROM products WHERE id::text = ${String(id)} OR slug = ${String(id)}`;
+        } catch (_) {}
+      }
+    } catch (e) {
+      console.warn('Neon bulk products delete warning:', e);
     }
   }
   return updated;
