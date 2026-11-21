@@ -1,6 +1,6 @@
 # UBAN HARKALLA — Product Requirements Document (PRD)
 
-| **Document Version** | 1.0.0 |
+| **Document Version** | 1.2.0 |
 |---|---|
 | **Status** | Approved / Living Document |
 | **Product Name** | UBAN HARKALLA E-Commerce Platform |
@@ -23,6 +23,8 @@ Based in the commercial district of Kano, Nigeria, the platform delivers an omni
 3. **Frictionless Logistics**: Free localized delivery within Kano metropolis and transparent regional shipping rates across Nigerian states with real-time shipment status tracking.
 4. **Dual-Mode Architectural Resilience**: Powered by **Neon Serverless PostgreSQL** for live cloud database synchronization with an automatic, lossless fallback to encrypted local storage ensuring continuous availability even during network disruptions.
 5. **Full Administrative Authority**: An integrated executive portal with real-time inventory counts, customer lifecycle control (suspend/activate/delete), order status audit logging, and canvas-based local image compression for high-speed uploads.
+6. **0ms Optimistic UI Toggles**: Instant visual state transitions on administrative toggles (Featured star, Published/Draft status, Customer activation/suspension, and Testimonial approval) providing immediate operator responsiveness while synchronizing asynchronously with Neon PostgreSQL and rolling back gracefully on network errors.
+7. **Universal Nigerian Locale Formatting**: Strict presentation standards across all storefront and admin touchpoints, formatting all monetary amounts (`formatPrice`) and inventory/numerical counts (`formatNumber`) with Nigerian locale (`en-NG`) comma separators.
 
 ---
 
@@ -129,7 +131,9 @@ graph LR
 #### 4.1.2 Homepage Discovery
 - **Hero Slider**: Promotional banners showcasing current deals, new arrivals, and brand messaging.
 - **Category Matrix**: Quick-links to major categories (Apple iPhones, Android Smartphones, Smart Gadgets & Audio, Power & Accessories).
-- **Featured Deals Carousel**: Curated list of high-priority devices with instant discount badges and stock indicators.
+- **Featured Deals Carousel & Product Cards**: Curated list of high-priority devices with instant discount badges, stock indicators, and prominent promo pricing.
+  - **Discounted Promo Price Precedence**: Displays active promotional price prominently in bold (e.g. `₦1,650,000`), with the original base price struck through (e.g. `₦1,750,000`) and an automated green percentage savings badge (e.g. `-6% OFF`). Products with variations automatically inherit top-level discounts if variation discounts are not individually set.
+  - **Universal Comma Formatting**: All currency figures formatted via `formatPrice()` ensuring Nigerian locale (`en-NG`) comma separators across all browsers.
 - **Trust Highlights**: Genuine verification guarantees, WhatsApp support, store pickup assurances.
 - **Customer Testimonials**: Carousel of verified customer feedback with ratings and city indicators.
 
@@ -170,10 +174,11 @@ sequenceDiagram
   - Primary high-resolution preview with zoom on hover.
   - Thumbnail reel supporting dynamic switching.
   - Automatic variant photo switching: selecting a variation with a custom photo immediately focuses that image in the gallery.
-- **Dynamic Variant Matrix**:
+- **Dynamic Variant Matrix & Pricing**:
   - Attribute selectors for Storage, Color, and Condition.
   - Real-time stock status computation (e.g. "Only 3 units left in stock!").
-  - Dynamic price display (showing original price strikethrough if discounted).
+  - **Hierarchical Price Precedence**: Variation discount takes priority; if not set, product-level discount is inherited automatically; otherwise base price is rendered. Strikethrough base price and savings badge display dynamically.
+  - **Universal Formatting**: All prices rendered with `formatPrice()` and inventory numbers with `formatNumber()`.
 - **Direct Engagement**:
   - WhatsApp Direct Inquiry button pre-populating message with device name and variation specs.
   - Add to Shopping Cart button with atomic stock validation.
@@ -269,9 +274,19 @@ graph TD
   - Re-ordering and single-click primary product photo selection.
   - Custom variation photo assignment with reset-to-primary functionality.
 - **Variant Matrix Management**:
-  - Add/remove variations dynamically.
+  - Add/remove variations dynamically with instant notification toasts ("Variation '[SKU]' added", "Variation '[SKU]' removed").
+  - Variation deletion includes modal confirmation safeguard preventing accidental inventory loss.
   - Per-variant SKU, attribute specification (Storage, Color, Condition), price overrides, and stock quantities.
   - Global stock sum calculated from variant matrix.
+- **Bulk Product Deletions**:
+  - Multi-select capability via table row checkboxes and a master "Select All" header checkbox on `/admin/products`.
+  - Floating bulk actions toolbar displaying selected item count and "Delete Selected (N)" button.
+  - Confirmation modal warning of permanent deletion of multiple products and their child variations from Neon DB.
+- **0ms Optimistic UI Toggles**:
+  - Featured star toggle and Published/Draft visibility toggles update UI state in 0ms without waiting for network roundtrips.
+  - Automatic rollback on network failure, backed by slide-in toast notifications.
+- **Real-Time Price & Form Comma Previews**:
+  - Base price and discounted promo price fields display live formatted comma previews, giving instant clarity on millions-tier currency entries.
 - **Admin Feedback**:
   - Slide-in `AdminToastProvider` notifications for all updates, uploads, deletions, and publishing toggles.
 
@@ -292,9 +307,12 @@ graph TD
 - **Direct Neon Synchronization**:
   - Real-time customer list querying Neon's `users` table joined with order spending aggregations.
   - Automatic purging of mock/dummy records.
-- **Access Controls**:
-  - Single-click account suspension: sets `is_active = false` in Neon database, immediately preventing subsequent logins.
-  - Single-click account activation: restores customer access.
+- **Bulk Customer Deletions**:
+  - Checkboxes on customer directory rows and master checkbox in header on `/admin/customers`.
+  - Floating bulk action banner with "Delete Selected (N)" button and confirmation dialog to purge multiple accounts simultaneously.
+- **Access Controls & 0ms Optimistic Toggles**:
+  - Single-click account suspension and activation updates UI status pill instantly in 0ms.
+  - Asynchronously updates `is_active` in Neon database (`is_active = false` immediately prevents subsequent logins; `is_active = true` restores customer access).
   - Permanent account deletion with confirmation modal.
 
 ---
@@ -383,10 +401,12 @@ erDiagram
 
 ## 6. Business Rules & Validation Constraints
 
-1. **Pricing and Currency**:
+1. **Pricing, Currency and Locale Formatting**:
    - Currency symbol is Nigerian Naira (`₦`).
-   - All monetary calculations must round to two decimal places; frontend formats with thousands commas (e.g. `₦1,580,000`).
+   - Universal comma formatting: all monetary figures must be formatted with Nigerian locale (`en-NG`) thousands separators via `formatPrice()` (e.g. `₦1,580,000` or `₦1,650,000.00`).
+   - Numerical metrics and stock counts must be formatted via `formatNumber()` (e.g. `1,250` units).
    - `discounted_price` must strictly be less than `base_price` when set.
+   - **Promotional Price Precedence**: When `discounted_price` > 0 and < `base_price`, `discounted_price` takes precedence as the active selling price across storefront cards, quick views, and detail pages. If a variation has no specific discount, it automatically inherits the parent product's discounted price.
 2. **Stock Invariants**:
    - Stock cannot be negative.
    - Total product stock equals the arithmetic sum of its variation quantities when variations exist.

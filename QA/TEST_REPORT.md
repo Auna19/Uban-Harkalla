@@ -98,7 +98,7 @@ All identified defects across UI layout, text truncation, search interactivity, 
 
 ## 3. Bug Resolution & Verification Summary
 
-During the execution cycle, 7 defects were identified and cataloged in [QA/BUG_SHEET.md](file:///c:/Users/USER/Videos/DSN%20Automation/Uban%20Harkalla/QA/BUG_SHEET.md). All 7 issues were resolved in source code and verified:
+During the execution cycle, 9 defects were identified and cataloged in [QA/BUG_SHEET.md](file:///c:/Users/USER/Videos/DSN%20Automation/Uban%20Harkalla/QA/BUG_SHEET.md). All 9 issues were resolved in source code and verified:
 
 1. **BUG-001 (Cart Modal Overlap & `undefined` Text):**
    - Fixed property lookup `item.name || item.product_name` in `CartPage.jsx`.

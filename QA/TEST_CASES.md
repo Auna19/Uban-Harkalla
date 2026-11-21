@@ -1,6 +1,6 @@
 # UBAN HARKALLA — Comprehensive QA Test Cases Specification
 
-| **Document Version** | 1.0.0 |
+| **Document Version** | 1.2.0 |
 |---|---|
 | **Author** | Antigravity QA Engineering Team |
 | **Project** | UBAN HARKALLA Premium Smartphones & Gadgets E-Commerce |
@@ -336,6 +336,8 @@ The following **10 master end-to-end test cases** validate complete cross-page, 
 | **TC-PROD-005** | Non-existent product slug (404 Error handling) | Negative | P1 | Direct URL entry | 1. Navigate to `/product/non-existent-device-xyz-123`. | Invalid slug | Renders 404 Not Found page with friendly message and "Back to Shop" button; no blank screen or fatal error. |
 | **TC-PROD-006** | Direct WhatsApp inquiry button generation | Positive | P1 | On Product Page | 1. Click "Order via WhatsApp" button.<br>2. Inspect generated URL. | Click WhatsApp button | Opens `https://wa.me/2348123456789` with pre-filled message containing product title, storage, color, and price. |
 | **TC-PROD-007** | Sticky Mobile Add to Cart Bar | Responsive | P1 | Viewport < 640px | 1. Scroll past the primary action fold on mobile.<br>2. Observe bottom sticky bar. | Mobile viewport scroll | Sticky bar appears with thumbnail, current price, and "Add to Cart" button. |
+| **TC-PROD-008** | Hierarchical promotional discount price precedence | Positive | P0 | Product with base price ₦1,750,000 and discounted price ₦1,650,000 | 1. Open homepage and navigate to Shop.<br>2. Inspect product card and Quick View modal.<br>3. Open `/product/:slug`. | Product with active discount | Promotional price (₦1,650,000) displays in prominent bold text. Base price (₦1,750,000) displays struck-through. Green savings badge displays (e.g. "-6% OFF"). Variations inherit product-level discount when variation discount is null/0. |
+| **TC-PROD-009** | Universal thousands comma formatting on prices and counts | Positive | P0 | Products with prices >= ₦1,000 and stock counts | 1. Inspect product card, quick view, PDP, cart, and checkout.<br>2. Inspect admin inventory and metrics. | Numeric database values | All monetary figures are rendered with comma separators via `formatPrice()` (e.g. `₦1,650,000`). All inventory counts are rendered via `formatNumber()` (e.g. `1,250` units). No unformatted strings or raw numbers appear. |
 
 ---
 
@@ -419,6 +421,8 @@ The following **10 master end-to-end test cases** validate complete cross-page, 
 | **TC-INV-010** | Delete product with confirmation modal | Positive | P0 | On `/admin/products` | 1. Click trash icon on target product.<br>2. Modal opens: "Delete Product Inventory".<br>3. Click "Yes, Delete Product". | Confirm deletion | Product and associated variations deleted from Neon DB. Success toast confirms deletion. Table refreshes. |
 | **TC-INV-011** | Multiple product selection checkboxes and bulk deletion | Positive | P1 | On `/admin/products` | 1. Select checkboxes for multiple products.<br>2. Observe bulk action banner displaying selected count.<br>3. Click "Delete Selected (N)".<br>4. Inspect confirmation modal with warning.<br>5. Confirm deletion. | Multiple product IDs | All selected products and variations are deleted from database. Toast confirms: "Successfully deleted N selected products!" Table refreshes and selections clear. |
 | **TC-INV-012** | Remove product variation with confirmation modal & toast notification | Positive | P0 | On Product Form (Variations Builder) | 1. Click "Remove" on a variation.<br>2. Modal dialog opens: "Remove Product Variation?".<br>3. Click "Remove Variation". | Target variation index / SKU | Modal closes. Target variation is removed from state. Success notification toast is displayed: "Variation '[SKU]' removed." |
+| **TC-INV-013** | Base price and discounted promo price entry with live formatted comma previews | Positive | P1 | On `/admin/products/create` or edit | 1. Enter Base Price: `1750000`.<br>2. Enter Discounted Price: `1650000`.<br>3. Inspect formatted helper text previews. | Base: `1750000`, Discount: `1650000` | Input helper text previews render immediately formatted as `₦1,750,000` and `₦1,650,000`. Savings percentage indicator calculates automatically. |
+| **TC-INV-014** | 0ms Optimistic UI updates for Featured star and Published status toggles | Positive | P0 | On `/admin/products` | 1. Click Featured star or Published status toggle.<br>2. Observe immediate UI state transition. | Toggle click | Visual toggle state transitions in 0ms without lag or waiting for network roundtrip. State synchronizes with Neon DB asynchronously; rolls back cleanly if connection fails. |
 
 ---
 
@@ -456,6 +460,7 @@ The following **10 master end-to-end test cases** validate complete cross-page, 
 | **TC-CUST-005** | Search customers by name, email, or phone | Positive | P1 | Multiple customers | 1. Type customer's name into search input.<br>2. Type partial phone number. | Search query | Table instantly filters to matching customers; displays counter: "Total: X customers". |
 | **TC-CUST-006** | Empty customer directory state | Edge Case | P2 | No customers match search | 1. Type `"nonexistent_user_query_123"` into search. | Query with 0 matches | Displays clean empty state: "No Registered Customers Found" with `UserX` icon and helpful guidance text. |
 | **TC-CUST-007** | Multiple customer selection checkboxes and bulk deletion | Positive | P1 | On `/admin/customers` | 1. Select checkboxes for multiple customers.<br>2. Observe bulk action banner with selected counter.<br>3. Click "Delete Selected (N)".<br>4. Inspect confirmation modal.<br>5. Confirm deletion. | Multiple customer IDs | Selected customer accounts are permanently removed from database and local state. Toast displays: "Successfully deleted N selected customer accounts!" Table refreshes and checkboxes clear. |
+| **TC-CUST-008** | 0ms Optimistic UI updates for customer activation/suspension toggles | Positive | P0 | On `/admin/customers` | 1. Click Suspend or Activate on a customer row.<br>2. Observe immediate badge transition. | Click Suspend / Activate | Badge state updates immediately in 0ms (Active <-> Suspended). Neon DB is updated asynchronously in the background. |
 
 ---
 
