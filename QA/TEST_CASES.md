@@ -454,6 +454,7 @@ The following **10 master end-to-end test cases** validate complete cross-page, 
 | **TC-CUST-004** | Permanently delete customer account | Positive | P0 | Customer in directory | 1. Click trash icon on customer row.<br>2. Confirmation modal appears.<br>3. Click "Yes, Delete". | Click Delete + Confirm | Customer row permanently deleted from Neon `users` table and local cache. Success toast confirms deletion. Table refreshes. |
 | **TC-CUST-005** | Search customers by name, email, or phone | Positive | P1 | Multiple customers | 1. Type customer's name into search input.<br>2. Type partial phone number. | Search query | Table instantly filters to matching customers; displays counter: "Total: X customers". |
 | **TC-CUST-006** | Empty customer directory state | Edge Case | P2 | No customers match search | 1. Type `"nonexistent_user_query_123"` into search. | Query with 0 matches | Displays clean empty state: "No Registered Customers Found" with `UserX` icon and helpful guidance text. |
+| **TC-CUST-007** | Multiple customer selection checkboxes and bulk deletion | Positive | P1 | On `/admin/customers` | 1. Select checkboxes for multiple customers.<br>2. Observe bulk action banner with selected counter.<br>3. Click "Delete Selected (N)".<br>4. Inspect confirmation modal.<br>5. Confirm deletion. | Multiple customer IDs | Selected customer accounts are permanently removed from database and local state. Toast displays: "Successfully deleted N selected customer accounts!" Table refreshes and checkboxes clear. |
 
 ---
 

@@ -1354,6 +1354,40 @@ export async function deleteCustomer(id) {
   return updated;
 }
 
+export async function deleteCustomers(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const idSet = new Set(ids.map(String));
+
+  if (isNeonConfigured && sql) {
+    try {
+      for (const id of ids) {
+        const isUuid = id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        if (isUuid) {
+          try {
+            await sql`DELETE FROM users WHERE id = ${id}`;
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      console.warn('Neon bulk delete customers error:', e);
+    }
+  }
+
+  const current = getStoredData(STORAGE_KEYS.CUSTOMERS, []);
+  const updated = current.filter((c) => !idSet.has(String(c.id)));
+  saveStoredData(STORAGE_KEYS.CUSTOMERS, updated);
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const registered = JSON.parse(localStorage.getItem('ubh_registered_users') || '[]');
+      const updatedReg = registered.filter((u) => !idSet.has(String(u.id)));
+      localStorage.setItem('ubh_registered_users', JSON.stringify(updatedReg));
+    }
+  } catch (_) {}
+
+  return updated;
+}
+
 // ------------------------------------------------------------------------------
 // REPORTS & ANALYTICS
 // ------------------------------------------------------------------------------

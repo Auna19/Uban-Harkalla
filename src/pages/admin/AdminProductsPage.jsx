@@ -35,7 +35,7 @@ export default function AdminProductsPage() {
         const raw = localStorage.getItem('ubh_products');
         if (raw) return JSON.parse(raw);
       }
-    } catch (_) {}
+    } catch (_) { }
     return [];
   });
   const [categories, setCategories] = useState(() => {
@@ -44,7 +44,7 @@ export default function AdminProductsPage() {
         const raw = localStorage.getItem('ubh_categories');
         if (raw) return JSON.parse(raw);
       }
-    } catch (_) {}
+    } catch (_) { }
     return [];
   });
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,7 +55,7 @@ export default function AdminProductsPage() {
         const raw = localStorage.getItem('ubh_products');
         if (raw && JSON.parse(raw).length > 0) return false;
       }
-    } catch (_) {}
+    } catch (_) { }
     return true;
   });
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -323,9 +323,8 @@ export default function AdminProductsPage() {
                   return (
                     <tr
                       key={prod.id}
-                      className={`transition-colors ${
-                        isSelected ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-900/60'
-                      }`}
+                      className={`transition-colors ${isSelected ? 'bg-emerald-950/20 hover:bg-emerald-950/30' : 'hover:bg-slate-900/60'
+                        }`}
                     >
                       <td className="py-3.5 px-3 w-10 text-center">
                         <input
@@ -393,7 +392,7 @@ export default function AdminProductsPage() {
                             ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
                             : 'text-slate-600 hover:text-slate-400'
                             }`}
-                          title={prod.is_featured ? 'Toggle Featured: Click to unfeature' : 'Toggle Featured: Click to feature on homepage'}
+                          title={prod.is_featured ? 'Click to unfeature' : 'Click to feature on homepage'}
                         >
                           <Star className={`w-4 h-4 transition-transform ${prod.is_featured ? 'fill-amber-400' : ''}`} />
                         </button>
