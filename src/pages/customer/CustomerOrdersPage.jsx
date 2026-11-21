@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getOrders } from '../../services/dataService';
 import { Package, Search, ExternalLink, Clock, ShoppingBag } from 'lucide-react';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function CustomerOrdersPage() {
   const { user } = useAuth();
@@ -129,7 +130,7 @@ export default function CustomerOrdersPage() {
                     {order.delivery_method?.replace(/_/g, ' ')} ({order.delivery_state || 'Standard'})
                   </td>
                   <td className="py-4 font-extrabold text-slate-950">
-                    ₦{order.total_amount?.toLocaleString()}
+                    {formatPrice(order.total_amount)}
                   </td>
                   <td className="py-4">
                     <span

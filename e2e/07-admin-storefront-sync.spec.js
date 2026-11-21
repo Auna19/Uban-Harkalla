@@ -33,9 +33,11 @@ test.describe.serial('Module 7: Admin to Storefront Cross-Browser Data & Image S
     const addImageBtn = adminPage.getByRole('button', { name: /Add Image URL/i });
     await addImageBtn.click();
 
-    // Fill prices and stock
+    // Fill prices and stock (Base price: 850,000, Discounted promo price: 780,000)
     const basePriceInput = adminPage.locator('input[type="number"]').first();
     await basePriceInput.fill('850000');
+    const discountPriceInput = adminPage.locator('input[placeholder*="promo price"]');
+    await discountPriceInput.fill('780000');
 
     const shortDesc = adminPage.locator('input[placeholder*="Titanium design"]');
     await shortDesc.fill('Next-generation sync test smartphone flagship with 5G.');
@@ -56,10 +58,13 @@ test.describe.serial('Module 7: Admin to Storefront Cross-Browser Data & Image S
     // Navigate to Homepage / Landing Page
     await clientPage.goto('/');
     
-    // Assert the new product appears on the Landing Page
-    const landingProductCard = clientPage.locator(`text=${testProductName}`).first();
+    // Assert the new product appears on the Landing Page and displays active discounted price and commas
+    const landingProductCard = clientPage.locator('.group', { hasText: testProductName }).first();
     await landingProductCard.scrollIntoViewIfNeeded();
     await expect(landingProductCard).toBeVisible({ timeout: 35000 });
+    await expect(landingProductCard).toContainText('₦780,000');
+    await expect(landingProductCard).toContainText('₦850,000');
+    await expect(landingProductCard).toContainText('Save ₦70,000');
 
     // Navigate to Shop Catalog
     await clientPage.goto('/shop');
@@ -122,8 +127,8 @@ test.describe.serial('Module 7: Admin to Storefront Cross-Browser Data & Image S
     await clientPage.goto(`/product/${testProductSlug}`);
     
     // Check product page
-    const prodHeading = clientPage.locator(`text=${testProductName}`).first();
-    await expect(prodHeading).toBeVisible({ timeout: 30000 });
+    const prodHeading = clientPage.locator('h1').first();
+    await expect(prodHeading).toContainText(testProductName, { timeout: 30000 });
 
     const mainImg = clientPage.locator('img').first();
     await expect(mainImg).toBeVisible();

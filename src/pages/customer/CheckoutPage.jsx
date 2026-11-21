@@ -7,6 +7,7 @@ import {
   getBusinessSettings,
   createOrderAtomic,
 } from '../../services/dataService';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   ShieldCheck,
   Truck,
@@ -480,10 +481,10 @@ export default function CheckoutPage() {
                     <div key={i.id} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
                       <div className="max-w-[180px]">
                         <p className="font-bold text-slate-900 truncate">{i.name}</p>
-                        <p className="text-[10px] text-slate-400">Qty: {i.quantity} × ₦{i.unit_price.toLocaleString()}</p>
+                        <p className="text-[10px] text-slate-400">Qty: {formatNumber(i.quantity)} × {formatPrice(i.unit_price)}</p>
                       </div>
                       <span className="font-bold text-slate-900">
-                        ₦{i.subtotal.toLocaleString()}
+                        {formatPrice(i.subtotal)}
                       </span>
                     </div>
                   ))}
@@ -493,7 +494,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-xs pt-4 border-t border-slate-100">
                   <div className="flex justify-between text-slate-600">
                     <span>Subtotal</span>
-                    <span className="font-bold text-slate-900">₦{subtotal.toLocaleString()}</span>
+                    <span className="font-bold text-slate-900">{formatPrice(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Delivery Fee ({deliveryMethod === 'physical_pickup' ? 'Store Pickup' : selectedState})</span>
@@ -501,19 +502,19 @@ export default function CheckoutPage() {
                       {deliveryMethod === 'physical_pickup' || deliveryFee === 0 ? (
                         <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">FREE (₦0)</span>
                       ) : (
-                        `₦${deliveryFee.toLocaleString()}`
+                        formatPrice(deliveryFee)
                       )}
                     </span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-emerald-600 font-bold">
                       <span>Discount</span>
-                      <span>-₦{discount.toLocaleString()}</span>
+                      <span>-{formatPrice(discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-base font-black text-slate-950 pt-3 border-t border-slate-100">
                     <span>Total Payable</span>
-                    <span className="text-emerald-700">₦{totalAmount.toLocaleString()}</span>
+                    <span className="text-emerald-700">{formatPrice(totalAmount)}</span>
                   </div>
                 </div>
 

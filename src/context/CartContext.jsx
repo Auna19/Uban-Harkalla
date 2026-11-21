@@ -37,9 +37,16 @@ export function CartProvider({ children }) {
    * Add item to cart with selected variation
    */
   const addToCart = useCallback((product, variation, quantity = 1) => {
-    const unitPrice = variation
-      ? (variation.discounted_price || variation.price)
-      : (product.discounted_price || product.base_price);
+    const varPrice = variation?.price ? Number(variation.price) : (Number(product.base_price) || 0);
+    const varDiscount = variation?.discounted_price ? Number(variation.discounted_price) : null;
+    const prodDiscount = product.discounted_price ? Number(product.discounted_price) : null;
+
+    let unitPrice = varPrice;
+    if (varDiscount && varDiscount > 0 && varDiscount < varPrice) {
+      unitPrice = varDiscount;
+    } else if (prodDiscount && prodDiscount > 0 && prodDiscount < varPrice) {
+      unitPrice = prodDiscount;
+    }
 
     const availableStock = variation ? variation.stock_quantity : product.stock_quantity;
     const variationKey = variation ? variation.id : 'default';

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useSearchParams, useLocation, Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { CheckCircle2, Package, ArrowRight, Home, Download, Truck, ShieldCheck } from 'lucide-react';
+import { formatPrice } from '../../utils/formatters';
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -85,7 +86,7 @@ export default function OrderSuccessPage() {
               </div>
               <div className="flex justify-between text-slate-900 font-black text-sm pt-2 border-t border-slate-200">
                 <span>Total Amount Paid:</span>
-                <span className="text-emerald-700">₦{order.total_amount?.toLocaleString()}</span>
+                <span className="text-emerald-700">{formatPrice(order.total_amount)}</span>
               </div>
             </div>
           )}

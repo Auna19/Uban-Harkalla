@@ -50,7 +50,7 @@ test.describe('Module 1: Navigation & Global Storefront Layout', () => {
   test('TC-NAV-005: Shopping cart counter badge updates dynamically', async ({ page }) => {
     await page.goto('/product/apple-iphone-15-pro-max');
     const addBtn = page.getByRole('button', { name: /Add to Shopping Cart/i });
-    await expect(addBtn).toBeEnabled();
+    await expect(addBtn).toBeEnabled({ timeout: 25000 });
     await addBtn.click();
 
     // Check navbar cart badge displays at least 1

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getOrders } from '../../services/dataService';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   Package,
   Clock,
@@ -164,7 +165,7 @@ export default function CustomerOverviewPage() {
                       {o.items?.map((i) => i.product_name).join(', ') || '1 Item'}
                     </td>
                     <td className="py-3.5 font-extrabold text-slate-900">
-                      ₦{o.total_amount.toLocaleString()}
+                      {formatPrice(o.total_amount)}
                     </td>
                     <td className="py-3.5">
                       <span

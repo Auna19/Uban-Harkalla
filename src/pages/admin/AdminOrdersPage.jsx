@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getOrders, updateOrderStatus } from '../../services/dataService';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   Package,
   Search,
@@ -283,7 +284,7 @@ export default function AdminOrdersPage() {
           </div>
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Active Value</span>
-            <span className="text-lg font-black text-emerald-400">₦{metrics.revenue.toLocaleString()}</span>
+            <span className="text-lg font-black text-emerald-400">{formatPrice(metrics.revenue)}</span>
           </div>
         </div>
       </div>
@@ -435,7 +436,7 @@ export default function AdminOrdersPage() {
           </div>
           {filtered.length > 0 && (
             <span className="text-[11px] text-slate-500">
-              Page Total: <strong className="text-emerald-400 font-bold">₦{filtered.reduce((s, o) => s + (Number(o.total_amount) || 0), 0).toLocaleString()}</strong>
+              Page Total: <strong className="text-emerald-400 font-bold">{formatPrice(filtered.reduce((s, o) => s + (Number(o.total_amount) || 0), 0))}</strong>
             </span>
           )}
         </div>
@@ -518,7 +519,7 @@ export default function AdminOrdersPage() {
                   <div className="text-right">
                     <span className="text-[10px] text-slate-400 uppercase font-semibold block">Total</span>
                     <span className="font-black text-emerald-400 text-sm">
-                      ₦{order.total_amount?.toLocaleString()}
+                      {formatPrice(order.total_amount)}
                     </span>
                   </div>
                 </div>
@@ -637,7 +638,7 @@ export default function AdminOrdersPage() {
                       </td>
 
                       <td className="py-3.5 px-4 font-black text-emerald-400 whitespace-nowrap text-sm">
-                        ₦{order.total_amount?.toLocaleString()}
+                        {formatPrice(order.total_amount)}
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">

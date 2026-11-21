@@ -15,11 +15,11 @@ A comprehensive automated End-to-End (E2E) regression test suite was constructed
 All identified defects across UI layout, text truncation, search interactivity, catalog loading states, admin inventory display, and checkout validation were systematically resolved in the codebase and re-tested.
 
 ### Key Quality Metrics
-- **Total Test Cases Executed:** 27
-- **Passed:** 27 (100.0%)
+- **Total Test Cases Executed:** 28
+- **Passed:** 28 (100.0%)
 - **Failed:** 0 (0.0%)
 - **Flaky / Retried:** 0
-- **Total Execution Duration:** 2.0 minutes
+- **Total Execution Duration:** 2.4 minutes
 - **Automation Status:** **PASSED — PRODUCTION READY**
 
 ---
@@ -54,6 +54,7 @@ All identified defects across UI layout, text truncation, search interactivity, 
 | **TC-PROD-002** | Variation matrix selection (Storage / Condition) dynamically updates pricing | 5.5s | **PASSED** |
 | **TC-PROD-003** | WhatsApp Order CTA generates correctly formatted prefilled message | 4.6s | **PASSED** |
 | **TC-PROD-004** | Non-existent product slug triggers resilient 404 error boundary | 3.4s | **PASSED** |
+| **TC-PROD-005** | Comma-formatted pricing, active discounted price and savings badge display properly | 6.5s | **PASSED** |
 
 ---
 
@@ -116,6 +117,12 @@ During the execution cycle, 7 defects were identified and cataloged in [QA/BUG_S
    - Resolved Postgres UUID type mismatch for categories and brands in `dataService.js`.
    - Populated missing SQL columns (`category_id`, `brand_id`, `images`, `specifications`) in `INSERT`/`UPDATE`.
    - Implemented SWR state hydration in `HomePage.jsx` and `ShopPage.jsx` for instant load and seamless background sync across different browsers.
+8. **BUG-008 (Discounted Promo Price Ignored on Landing Page):**
+   - Resolved precedence gap where variations with unconfigured discounts overwrote the product's active promo price.
+   - Built hierarchical fallback (`variation.discounted_price` -> `product.discounted_price` -> base price) in `ProductCard`, `QuickViewModal`, and `ProductDetailPage`.
+9. **BUG-009 (Missing Comma Thousands Separators in Figures and Prices):**
+   - Created centralized `formatPrice(amount)` and `formatNumber(val)` utility in `src/utils/formatters.js`.
+   - Normalized all Postgres string quantities and prices into genuine numbers, guaranteeing Nigerian locale comma formatting across all storefront and admin views.
 
 ---
 
@@ -132,6 +139,6 @@ During the execution cycle, 7 defects were identified and cataloged in [QA/BUG_S
 
 ## 5. QA Sign-Off & Recommendation
 
-The UBAN HARKALLA e-commerce web platform has achieved **100% test pass rate** across all 27 automated regression test cases. The user experience is verified seamless, responsive, and resilient across both mobile and desktop environments.
+The UBAN HARKALLA e-commerce web platform has achieved **100% test pass rate** across all 28 automated regression test cases. The user experience is verified seamless, responsive, and resilient across both mobile and desktop environments.
 
 **Final Verdict:** **APPROVED FOR PRODUCTION RELEASE**

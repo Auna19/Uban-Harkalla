@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getCustomers, toggleCustomerStatus, deleteCustomer, deleteCustomers } from '../../services/dataService';
 import { useAdminToast } from '../../context/AdminToastContext';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import { Users, Search, CheckCircle2, XCircle, Mail, Phone, Trash2, UserX } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
 
@@ -244,11 +245,11 @@ export default function AdminCustomersPage() {
                       </td>
 
                       <td className="py-3.5 px-4 font-bold text-slate-200">
-                        {c.total_orders || 0} orders
+                        {formatNumber(c.total_orders || 0)} orders
                       </td>
 
                       <td className="py-3.5 px-4 font-black text-emerald-400">
-                        ₦{(c.total_spent || 0).toLocaleString()}
+                        {formatPrice(c.total_spent || 0)}
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-400">

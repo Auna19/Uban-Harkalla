@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { Check, X, ShoppingBag, ArrowRight } from 'lucide-react';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function CartNotificationToast() {
   const { cartNotification, dismissNotification, itemCount, subtotal } = useCart();
@@ -57,10 +58,10 @@ export default function CartNotificationToast() {
             )}
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs font-black text-emerald-600">
-                ₦{cartNotification.unitPrice?.toLocaleString()}
+                {formatPrice(cartNotification.unitPrice)}
               </span>
               <span className="text-[11px] font-bold text-slate-400">
-                × {cartNotification.quantity}
+                × {formatNumber(cartNotification.quantity)}
               </span>
             </div>
           </div>
@@ -73,7 +74,7 @@ export default function CartNotificationToast() {
             <span>Total in Cart ({itemCount} item{itemCount === 1 ? '' : 's'}):</span>
           </span>
           <span className="font-black text-slate-900">
-            ₦{subtotal?.toLocaleString()}
+            {formatPrice(subtotal)}
           </span>
         </div>
 

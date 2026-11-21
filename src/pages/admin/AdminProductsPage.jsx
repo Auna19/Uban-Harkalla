@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   getProducts,
   getCategories,
@@ -357,11 +358,11 @@ export default function AdminProductsPage() {
 
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="font-black text-emerald-400">
-                          ₦{(prod.discounted_price || prod.base_price).toLocaleString()}
+                          {formatPrice(prod.discounted_price || prod.base_price)}
                         </div>
                         {prod.discounted_price && (
                           <div className="text-[10px] text-slate-500 line-through">
-                            ₦{prod.base_price.toLocaleString()}
+                            {formatPrice(prod.base_price)}
                           </div>
                         )}
                       </td>
@@ -381,7 +382,7 @@ export default function AdminProductsPage() {
                               : 'text-emerald-400'
                             }`}
                         >
-                          {prod.stock_quantity} units
+                          {formatNumber(prod.stock_quantity)} units
                         </span>
                       </td>
 

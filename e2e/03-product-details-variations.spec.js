@@ -58,4 +58,30 @@ test.describe('Module 3: Product Detail Engine & Variation Matrix', () => {
     const returnBtn = page.getByRole('link', { name: 'Return to Catalogue' });
     await expect(returnBtn).toBeVisible();
   });
+
+  test('TC-PROD-005: Comma-formatted pricing, active discounted price and savings badge display properly', async ({ page }) => {
+    // Check Landing page product card pricing display
+    await page.goto('/');
+    const productCard = page.locator('.group', { hasText: 'Apple iPhone 15 Pro Max' }).first();
+    await expect(productCard).toBeVisible({ timeout: 25000 });
+
+    // Assert prices follow Nigerian Naira thousands comma format (e.g. ₦1,580,000)
+    const cardText = await productCard.innerText();
+    expect(cardText).toMatch(/₦\d{1,3}(,\d{3})+/);
+
+    // Save badge has comma formatting e.g. Save ₦70,000
+    if (cardText.includes('Save')) {
+      expect(cardText).toMatch(/Save\s+₦\d{1,3}(,\d{3})+/);
+    }
+
+    // Now navigate to PDP
+    await page.goto('/product/apple-iphone-15-pro-max');
+    await expect(page.locator('h1')).toContainText('Apple iPhone 15 Pro Max', { timeout: 25000 });
+
+    // Verify main PDP price has commas
+    const pdpPrice = page.locator('span.text-3xl, span.text-4xl').first();
+    await expect(pdpPrice).toBeVisible();
+    const pdpPriceText = await pdpPrice.textContent();
+    expect(pdpPriceText).toMatch(/^₦\d{1,3}(,\d{3})+$/);
+  });
 });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAnalytics, getOrders, getProducts } from '../../services/dataService';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   Wallet,
   Package,
@@ -77,7 +78,7 @@ export default function AdminDashboardPage() {
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Sales</span>
             <p className="text-2xl font-black text-emerald-400 mt-1">
-              ₦{analytics.totalRevenue.toLocaleString()}
+              {formatPrice(analytics.totalRevenue)}
             </p>
             <span className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1 mt-1">
               <TrendingUp className="w-3 h-3" /> Realized Revenue
@@ -147,7 +148,7 @@ export default function AdminDashboardPage() {
                 <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} />
                 <YAxis stroke="#64748b" fontSize={11} tickFormatter={(v) => `₦${v / 1000000}M`} />
                 <Tooltip
-                  formatter={(value) => [`₦${value.toLocaleString()}`, 'Sales']}
+                  formatter={(value) => [formatPrice(value), 'Sales']}
                   contentStyle={{ backgroundColor: '#020617', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }}
                 />
                 <Bar dataKey="sales" fill="#10b981" radius={[8, 8, 0, 0]} />
@@ -243,7 +244,7 @@ export default function AdminDashboardPage() {
                     {order.payment_method?.replace(/_/g, ' ')}
                   </td>
                   <td className="py-3.5 font-extrabold text-emerald-400">
-                    ₦{order.total_amount?.toLocaleString()}
+                    {formatPrice(order.total_amount)}
                   </td>
                   <td className="py-3.5">
                     <span

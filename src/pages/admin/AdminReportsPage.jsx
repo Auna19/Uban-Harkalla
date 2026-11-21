@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAnalytics, getOrders, getProducts } from '../../services/dataService';
 import { BarChart3, Download, Calendar, Package, TrendingUp } from 'lucide-react';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function AdminReportsPage() {
   const [analytics, setAnalytics] = useState(null);
@@ -75,21 +76,21 @@ export default function AdminReportsPage() {
         <div className="bg-slate-950 p-6 rounded-3xl border border-slate-800">
           <span className="text-xs font-bold uppercase text-slate-400">Total Net Revenue</span>
           <p className="text-2xl font-black text-emerald-400 mt-1">
-            ₦{analytics.totalRevenue.toLocaleString()}
+            {formatPrice(analytics.totalRevenue)}
           </p>
           <p className="text-[11px] text-slate-500 mt-1">Verified and fulfilled purchases</p>
         </div>
 
         <div className="bg-slate-950 p-6 rounded-3xl border border-slate-800">
           <span className="text-xs font-bold uppercase text-slate-400">Total Transactions</span>
-          <p className="text-2xl font-black text-white mt-1">{analytics.totalOrders}</p>
+          <p className="text-2xl font-black text-white mt-1">{formatNumber(analytics.totalOrders)}</p>
           <p className="text-[11px] text-slate-500 mt-1">Lifetime customer orders</p>
         </div>
 
         <div className="bg-slate-950 p-6 rounded-3xl border border-slate-800">
           <span className="text-xs font-bold uppercase text-slate-400">Average Order Value</span>
           <p className="text-2xl font-black text-amber-400 mt-1">
-            ₦{analytics.totalOrders ? Math.round(analytics.totalRevenue / analytics.totalOrders).toLocaleString() : 0}
+            {formatPrice(analytics.totalOrders ? Math.round(analytics.totalRevenue / analytics.totalOrders) : 0)}
           </p>
           <p className="text-[11px] text-slate-500 mt-1">Across all smartphone categories</p>
         </div>
@@ -115,9 +116,9 @@ export default function AdminReportsPage() {
                   <td className="py-3 font-bold text-white">{p.name}</td>
                   <td className="py-3 text-slate-400">{p.brand_name}</td>
                   <td className="py-3 font-black text-emerald-400">
-                    ₦{(p.discounted_price || p.base_price).toLocaleString()}
+                    {formatPrice(p.discounted_price || p.base_price)}
                   </td>
-                  <td className="py-3 font-semibold text-slate-200">{p.stock_quantity} units</td>
+                  <td className="py-3 font-semibold text-slate-200">{formatNumber(p.stock_quantity)} units</td>
                   <td className="py-3">
                     <span className="text-emerald-400 font-bold text-[10px] bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
                       In Demand

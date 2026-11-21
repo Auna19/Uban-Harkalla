@@ -18,6 +18,8 @@
 | **BUG-005** | Playwright Test Concurrency | Medium | P2 (High) | **FIXED & VERIFIED** | 4 parallel workers saturated serverless DB pool; reduced to 2 with resilient timeouts |
 | **BUG-006** | Checkout Payment Validation | Low | P3 (Medium) | **FIXED & VERIFIED** | Bank transfer session ID mandatory validation not handled in test fixture |
 | **BUG-007** | Admin Product & Image Sync | High | P1 (Urgent) | **FIXED & VERIFIED** | Neon UUID type violation, omitted SQL columns, and missing cross-browser SWR sync |
+| **BUG-008** | Product Discounted Promo Price | High | P1 (Urgent) | **FIXED & VERIFIED** | Variations defaulted to base price, ignoring product-level promo discount on landing page |
+| **BUG-009** | Number & Currency Formatting | Medium | P2 (High) | **FIXED & VERIFIED** | Postgres numeric strings failed `.toLocaleString()`; missing comma thousands separators |
 
 ---
 
@@ -178,14 +180,68 @@
 
 ---
 
+### BUG-008: Discounted Promo Price Ignored on Landing Page When Variations Configured
+- **Affected URL:** `/`, `/shop`, `/product/:slug`
+- **Component File(s):**
+  - `src/components/common/ProductCard.jsx`
+  - `src/components/common/QuickViewModal.jsx`
+  - `src/pages/public/ProductDetailPage.jsx`
+  - `src/context/CartContext.jsx`
+  - `src/services/dataService.js`
+  - `src/pages/admin/AdminProductFormPage.jsx`
+- **Severity:** High
+- **Priority:** P1
+- **Observed Behavior:**
+  - After entering a Base Price (e.g. ₦1,650,000) and a Discounted Price (e.g. ₦1,580,000) in Admin, the product card on the Landing Page displayed the base price (₦1,650,000) as the main active price, with no strikethrough or promo badge.
+- **Root Cause Analysis:**
+  1. In `ProductCard.jsx`, `currentPrice` checked `defaultVariation ? defaultVariation.discounted_price || defaultVariation.price : product.discounted_price || product.base_price`. When variations existed with unconfigured or null `discounted_price`, the variation's base `price` took precedence, completely bypassing `product.discounted_price`.
+  2. `AdminProductFormPage.jsx` did not propagate the product-level discount to variation records upon submission.
+- **Resolution Implemented:**
+  - Implemented hierarchical discount resolution in `ProductCard`, `QuickViewModal`, `ProductDetailPage`, and `CartContext`: check variation discount first; if absent, inherit the product-level discount.
+  - Automatically synchronized product-level discounts to variations in `dataService.js` and `AdminProductFormPage.jsx`.
+- **Verification Evidence:**
+  - Playwright test `TC-PROD-005` and `TC-SYNC-001` passed. The Landing Page displays `₦1,580,000` as the active bold price, `₦1,650,000` struck through, and a `Save ₦70,000` badge.
+
+---
+
+### BUG-009: Missing Comma Thousands Separators in Figures and Currency Values
+- **Affected URL:** Global (Storefront, Admin, Cart, Checkout, Orders, Customers, Delivery)
+- **Component File(s):**
+  - `src/utils/formatters.js`
+  - `src/components/common/ProductCard.jsx`
+  - `src/components/common/QuickViewModal.jsx`
+  - `src/pages/public/ProductDetailPage.jsx`
+  - `src/pages/customer/CartPage.jsx`
+  - `src/pages/customer/CheckoutPage.jsx`
+  - `src/pages/admin/AdminProductsPage.jsx`
+  - `src/pages/admin/AdminOrdersPage.jsx`
+  - `src/pages/admin/AdminDashboardPage.jsx`
+  - `src/pages/admin/AdminReportsPage.jsx`
+  - `src/pages/admin/AdminCustomersPage.jsx`
+  - `src/services/dataService.js`
+- **Severity:** Medium
+- **Priority:** P2
+- **Observed Behavior:**
+  - Numbers and figures throughout the application were rendered as raw digits (e.g., `₦1650000.00` or `1500000`) without comma separators.
+- **Root Cause Analysis:**
+  - Numeric columns from Neon Lakebase Postgres (e.g. `base_price`, `discounted_price`, `total_amount`) are returned as strings (e.g. `"1650000.00"`). JavaScript's `String.prototype.toLocaleString()` returns the string verbatim without formatting it as a number.
+- **Resolution Implemented:**
+  - Created standardized `formatPrice(amount)` and `formatNumber(val)` in `src/utils/formatters.js` that coerce strings to numbers, strip extraneous decimal points, and format using the Nigerian locale (`en-NG`) with thousands comma separators.
+  - Replaced all raw `.toLocaleString()` calls with `formatPrice` and `formatNumber`.
+  - Normalized all variation prices and quantities to genuine numbers in `dataService.js`.
+- **Verification Evidence:**
+  - Playwright test `TC-PROD-005` asserts regex pattern `/₦\d{1,3}(,\d{3})+/` across landing cards, PDP, cart, and admin tables. All figures render cleanly with commas (e.g., `₦1,650,000`, `₦1,580,000`, `Save ₦70,000`).
+
+---
+
 ## 3. Bug Classification Matrix by Severity
 
 | Severity Level | Count | Fixed | Verified |
 |---|---|---|---|
 | **Critical / Blocker** | 0 | 0 | 0 |
-| **High / Major** | 2 | 2 | 2 |
-| **Medium** | 3 | 3 | 3 |
+| **High / Major** | 3 | 3 | 3 |
+| **Medium** | 4 | 4 | 4 |
 | **Low / Minor** | 2 | 2 | 2 |
-| **Total Bugs** | **7** | **7** | **7** |
+| **Total Bugs** | **9** | **9** | **9** |
 
 **Bug Resolution Rate:** **100.0%**

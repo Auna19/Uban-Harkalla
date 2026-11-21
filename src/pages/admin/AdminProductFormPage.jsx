@@ -7,6 +7,7 @@ import {
   saveProduct,
   getAttributes,
 } from '../../services/dataService';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   Smartphone,
   Save,
@@ -271,11 +272,23 @@ export default function AdminProductFormPage() {
     const cleanSlug = (slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || `prod-${Date.now()}`;
     const primaryImage = imageUrls[0] || '/1001102628.jpg';
 
-    const normalizedVariations = variations.map((v) => ({
-      ...v,
-      has_custom_image: Boolean(v.has_custom_image),
-      image_url: v.has_custom_image ? v.image_url : primaryImage,
-    }));
+    const normalizedVariations = variations.map((v) => {
+      const vPrice = Number(v.price) || Number(basePrice) || 0;
+      const vDiscount = (v.discounted_price && Number(v.discounted_price) > 0)
+        ? Number(v.discounted_price)
+        : (discountedPrice && Number(discountedPrice) > 0 && Number(discountedPrice) < vPrice)
+          ? Number(discountedPrice)
+          : null;
+
+      return {
+        ...v,
+        price: vPrice,
+        discounted_price: vDiscount,
+        stock_quantity: Number(v.stock_quantity || 0),
+        has_custom_image: Boolean(v.has_custom_image),
+        image_url: v.has_custom_image ? v.image_url : primaryImage,
+      };
+    });
 
     const payload = {
       id: isEditing ? id : undefined,
@@ -452,6 +465,11 @@ export default function AdminProductFormPage() {
                 onChange={(e) => setBasePrice(e.target.value)}
                 className="w-full text-xs font-bold rounded-xl px-4 py-2.5 bg-slate-900 border border-slate-700 text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+              {Number(basePrice) > 0 && (
+                <span className="text-[11px] text-emerald-400/80 font-bold mt-1 block">
+                  Formatted: {formatPrice(basePrice)}
+                </span>
+              )}
             </div>
 
             <div>
@@ -466,6 +484,16 @@ export default function AdminProductFormPage() {
                 placeholder="Optional promo price"
                 className="w-full text-xs font-bold rounded-xl px-4 py-2.5 bg-slate-900 border border-slate-700 text-amber-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+              {Number(discountedPrice) > 0 && (
+                <span className="text-[11px] text-amber-400/80 font-bold mt-1 block">
+                  Formatted: {formatPrice(discountedPrice)}{' '}
+                  {Number(basePrice) > Number(discountedPrice) && (
+                    <span className="text-emerald-400 font-semibold">
+                      (Save {formatPrice(Number(basePrice) - Number(discountedPrice))})
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
           </div>
 
@@ -537,8 +565,8 @@ export default function AdminProductFormPage() {
                 <div
                   key={idx}
                   className={`relative group rounded-2xl overflow-hidden border ${idx === 0
-                      ? 'border-emerald-500 ring-2 ring-emerald-500/30'
-                      : 'border-slate-800 hover:border-slate-700'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+                    : 'border-slate-800 hover:border-slate-700'
                     } bg-slate-900 aspect-square`}
                 >
                   <img
@@ -729,6 +757,9 @@ export default function AdminProductFormPage() {
                         onChange={(e) => handleUpdateVariation(idx, 'price', Number(e.target.value))}
                         className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-emerald-400 font-bold"
                       />
+                      <span className="text-[10px] text-emerald-400/80 font-mono mt-0.5 block">
+                        {formatPrice(v.price || basePrice)}
+                      </span>
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-400 mb-1">Discount Price (₦)</label>
@@ -738,6 +769,13 @@ export default function AdminProductFormPage() {
                         onChange={(e) => handleUpdateVariation(idx, 'discounted_price', Number(e.target.value))}
                         className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-amber-400 font-bold"
                       />
+                      <span className="text-[10px] text-amber-400/80 font-mono mt-0.5 block">
+                        {Number(v.discounted_price) > 0
+                          ? formatPrice(v.discounted_price)
+                          : Number(discountedPrice) > 0
+                            ? `Inherits: ${formatPrice(discountedPrice)}`
+                            : 'No Discount'}
+                      </span>
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-400 mb-1">Stock Units</label>

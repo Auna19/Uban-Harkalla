@@ -4,6 +4,7 @@ import { ShoppingBag, Eye, CheckCircle2, ShieldCheck, Check, Sparkles } from 'lu
 import { useCart } from '../../context/CartContext';
 import TiltCard from './TiltCard';
 import QuickViewModal from './QuickViewModal';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
@@ -16,15 +17,25 @@ export default function ProductCard({ product }) {
   const defaultVariation =
     product.variations && product.variations.length > 0 ? product.variations[0] : null;
 
-  const currentPrice = defaultVariation
-    ? defaultVariation.discounted_price || defaultVariation.price
-    : product.discounted_price || product.base_price;
+  // 1. Determine numeric base / original price
+  const originalPrice = Number(
+    (defaultVariation && defaultVariation.price) ||
+    product.base_price ||
+    0
+  );
 
-  const originalPrice = defaultVariation
-    ? defaultVariation.price
-    : product.base_price;
+  // 2. Determine numeric discounted price (variation-specific first, fallback to product-level)
+  const varDiscount = defaultVariation?.discounted_price ? Number(defaultVariation.discounted_price) : null;
+  const prodDiscount = product.discounted_price ? Number(product.discounted_price) : null;
 
-  const hasDiscount = originalPrice > currentPrice;
+  const effectiveDiscount = (varDiscount && varDiscount > 0 && varDiscount < originalPrice)
+    ? varDiscount
+    : (prodDiscount && prodDiscount > 0 && prodDiscount < originalPrice)
+      ? prodDiscount
+      : null;
+
+  const currentPrice = effectiveDiscount !== null ? effectiveDiscount : originalPrice;
+  const hasDiscount = effectiveDiscount !== null && originalPrice > currentPrice;
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
 
   // Extract color dots if variations exist
@@ -73,7 +84,7 @@ export default function ProductCard({ product }) {
           )}
           {hasDiscount && (
             <span className="px-2.5 py-1 text-[10px] font-extrabold bg-emerald-600/95 backdrop-blur-md text-white rounded-full shadow-sm">
-              Save ₦{(originalPrice - currentPrice).toLocaleString()}
+              Save {formatPrice(originalPrice - currentPrice)}
             </span>
           )}
         </div>
@@ -156,17 +167,17 @@ export default function ProductCard({ product }) {
           <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-baseline justify-between gap-2">
             <div>
               <div className="text-base sm:text-lg font-black text-slate-950 tracking-tight">
-                ₦{currentPrice?.toLocaleString()}
+                {formatPrice(currentPrice)}
               </div>
               {hasDiscount && (
                 <div className="text-xs text-slate-400 line-through -mt-0.5 font-medium">
-                  ₦{originalPrice?.toLocaleString()}
+                  {formatPrice(originalPrice)}
                 </div>
               )}
             </div>
             {hasDiscount && (
               <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0">
-                -₦{(originalPrice - currentPrice).toLocaleString()}
+                -{formatPrice(originalPrice - currentPrice)}
               </span>
             )}
           </div>

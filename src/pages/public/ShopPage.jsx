@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getProducts, getCategories, getBrands } from '../../services/dataService';
 import ProductCard from '../../components/common/ProductCard';
 import { Search, Filter, SlidersHorizontal, X, ArrowUpDown, Tag, Sparkles } from 'lucide-react';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -436,7 +437,7 @@ export default function ShopPage() {
               <div>
                 <div className="flex items-center justify-between text-xs font-bold mb-2">
                   <span className="text-slate-400 uppercase tracking-wider">Max Price</span>
-                  <span className="text-emerald-700">₦{priceRange.max.toLocaleString()}</span>
+                  <span className="text-emerald-700">{formatPrice(priceRange.max)}</span>
                 </div>
                 <input
                   type="range"

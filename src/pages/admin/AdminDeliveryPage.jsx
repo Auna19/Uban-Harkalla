@@ -8,6 +8,7 @@ import {
 } from '../../services/dataService';
 import { Truck, Store, Plus, Edit, Trash2, CheckCircle2, Save } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { formatPrice } from '../../utils/formatters';
 
 export default function AdminDeliveryPage() {
   const [locations, setLocations] = useState([]);
@@ -138,7 +139,7 @@ export default function AdminDeliveryPage() {
                         FREE (₦0)
                       </span>
                     ) : (
-                      <span className="font-black text-white">₦{loc.fee.toLocaleString()}</span>
+                      <span className="font-black text-white">{formatPrice(loc.fee)}</span>
                     )}
                   </td>
                   <td className="py-3.5 px-4 text-right whitespace-nowrap">
@@ -311,7 +312,7 @@ export default function AdminDeliveryPage() {
         onConfirm={handleConfirmDelete}
         title="Delete Delivery Zone Rates?"
         message="Are you sure you want to delete delivery charges for this region? Customers selecting this location during checkout will not see custom rates."
-        itemName={deleteTarget ? `${deleteTarget.state} - ${deleteTarget.city} (₦${Number(deleteTarget.fee).toLocaleString()})` : ''}
+        itemName={deleteTarget ? `${deleteTarget.state} - ${deleteTarget.city} (${formatPrice(deleteTarget.fee)})` : ''}
         confirmText="Delete Location"
       />
 

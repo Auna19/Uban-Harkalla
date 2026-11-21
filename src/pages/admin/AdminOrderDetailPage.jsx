@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getOrderById, updateOrderStatus } from '../../services/dataService';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   Package,
   Truck,
@@ -121,7 +122,7 @@ export default function AdminOrderDetailPage() {
           <div className="text-left sm:text-right">
             <span className="text-xs font-bold text-slate-400 uppercase">Total Bill</span>
             <p className="text-2xl font-black text-emerald-400">
-              ₦{order.total_amount?.toLocaleString()}
+              {formatPrice(order.total_amount)}
             </p>
             <span className="text-[11px] text-slate-400 uppercase">
               {order.payment_method?.replace(/_/g, ' ')} ({order.payment_status})
@@ -193,14 +194,14 @@ export default function AdminOrderDetailPage() {
                   {item.variation_details && (
                     <p className="text-slate-400 font-medium mt-0.5">{item.variation_details}</p>
                   )}
-                  <p className="text-slate-500 mt-1">Quantity: {item.quantity}</p>
+                  <p className="text-slate-500 mt-1">Quantity: {formatNumber(item.quantity)}</p>
                 </div>
                 <div className="text-right">
                   <div className="font-black text-emerald-400 text-sm">
-                    ₦{item.subtotal?.toLocaleString()}
+                    {formatPrice(item.subtotal)}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    ₦{item.unit_price?.toLocaleString()} each
+                    {formatPrice(item.unit_price)} each
                   </div>
                 </div>
               </div>

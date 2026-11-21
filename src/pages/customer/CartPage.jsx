@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { getDeliveryLocations } from '../../services/dataService';
 import { Trash2, ShoppingBag, ArrowRight, ArrowLeft, Tag, Truck, ShieldCheck } from 'lucide-react';
 import ConfirmationModal from '../../components/common/ConfirmationModal';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function CartPage() {
   const {
@@ -148,7 +149,7 @@ export default function CartPage() {
                       </p>
                     )}
                     <div className="text-xs font-bold text-slate-900 mt-1.5 sm:hidden">
-                      ₦{item.unit_price.toLocaleString()} each
+                      {formatPrice(item.unit_price)} each
                     </div>
                   </div>
 
@@ -160,7 +161,7 @@ export default function CartPage() {
                     >
                       -
                     </button>
-                    <span className="px-3 text-xs font-bold text-slate-900">{item.quantity}</span>
+                    <span className="px-3 text-xs font-bold text-slate-900">{formatNumber(item.quantity)}</span>
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       className="w-8 h-8 rounded-lg bg-white text-slate-700 font-bold hover:bg-slate-100 flex items-center justify-center text-xs shadow-xs"
@@ -172,10 +173,10 @@ export default function CartPage() {
                   {/* Subtotal */}
                   <div className="text-right shrink-0 min-w-[90px]">
                     <div className="text-sm sm:text-base font-extrabold text-slate-950">
-                      ₦{item.subtotal.toLocaleString()}
+                      {formatPrice(item.subtotal)}
                     </div>
                     <div className="text-[11px] text-slate-400 hidden sm:block">
-                      ₦{item.unit_price.toLocaleString()} / unit
+                      {formatPrice(item.unit_price)} / unit
                     </div>
                   </div>
 
@@ -226,7 +227,7 @@ export default function CartPage() {
                 >
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.id}>
-                      {loc.state} - {loc.fee === 0 ? 'FREE (₦0)' : `₦${loc.fee.toLocaleString()}`}
+                      {loc.state} - {loc.fee === 0 ? 'FREE (₦0)' : formatPrice(loc.fee)}
                     </option>
                   ))}
                 </select>
@@ -266,8 +267,8 @@ export default function CartPage() {
               {/* Summary Rows */}
               <div className="space-y-2.5 text-xs pt-3 border-t border-slate-100">
                 <div className="flex justify-between text-slate-600">
-                  <span>Subtotal ({itemCount} items)</span>
-                  <span className="font-bold text-slate-900">₦{subtotal.toLocaleString()}</span>
+                  <span>Subtotal ({formatNumber(itemCount)} items)</span>
+                  <span className="font-bold text-slate-900">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Estimated Delivery Fee</span>
@@ -277,19 +278,19 @@ export default function CartPage() {
                         FREE
                       </span>
                     ) : (
-                      `₦${deliveryFee.toLocaleString()}`
+                      formatPrice(deliveryFee)
                     )}
                   </span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-semibold">
                     <span>Discount Applied</span>
-                    <span>-₦{discount.toLocaleString()}</span>
+                    <span>-{formatPrice(discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-black text-slate-950 pt-3 border-t border-slate-100">
                   <span>Total Amount</span>
-                  <span className="text-emerald-700">₦{totalAmount.toLocaleString()}</span>
+                  <span className="text-emerald-700">{formatPrice(totalAmount)}</span>
                 </div>
               </div>
 

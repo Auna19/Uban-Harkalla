@@ -305,7 +305,14 @@ export async function getProducts(filters = {}) {
             category_slug: np.category_slug,
             brand_name: np.brand_name,
             brand_slug: np.brand_slug,
-            variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : undefined,
+            variations: Array.isArray(np.variations) && np.variations.length > 0
+              ? np.variations.map((v) => ({
+                  ...v,
+                  price: Number(v.price) || 0,
+                  discounted_price: v.discounted_price && Number(v.discounted_price) > 0 ? Number(v.discounted_price) : null,
+                  stock_quantity: Number(v.stock_quantity || 0),
+                }))
+              : undefined,
           };
         });
 
@@ -427,7 +434,14 @@ export async function getProductBySlug(slug) {
           category_slug: np.category_slug,
           brand_name: np.brand_name,
           brand_slug: np.brand_slug,
-          variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : undefined,
+          variations: Array.isArray(np.variations) && np.variations.length > 0
+            ? np.variations.map((v) => ({
+                ...v,
+                price: Number(v.price) || 0,
+                discounted_price: v.discounted_price && Number(v.discounted_price) > 0 ? Number(v.discounted_price) : null,
+                stock_quantity: Number(v.stock_quantity || 0),
+              }))
+            : undefined,
         };
       }
     } catch (e) {
@@ -446,18 +460,31 @@ export async function saveProduct(product) {
   const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
   const normalizedPrimaryImage = (product.images && product.images[0]) || product.image_url || '/1001102628.jpg';
 
-  // Ensure variations inherit the primary image unless explicitly customized
+  // Ensure variations inherit proper numeric prices, primary image unless explicitly customized,
+  // and inherit product-level discount when no specific variation discount was set
   const normalizedVariations = (product.variations || []).map((v) => {
-    if (v.has_custom_image === false) {
-      return { ...v, image_url: normalizedPrimaryImage, has_custom_image: false };
+    const vPrice = Number(v.price) || Number(product.base_price) || 0;
+    const vDiscount = (v.discounted_price && Number(v.discounted_price) > 0)
+      ? Number(v.discounted_price)
+      : (product.discounted_price && Number(product.discounted_price) > 0 && Number(product.discounted_price) < vPrice)
+        ? Number(product.discounted_price)
+        : null;
+
+    let img = normalizedPrimaryImage;
+    if (v.has_custom_image && v.image_url) {
+      img = v.image_url;
+    } else if (v.image_url && v.image_url !== '/1001102628.jpg' && v.image_url !== normalizedPrimaryImage) {
+      img = v.image_url;
     }
-    if (v.has_custom_image === true) {
-      return v;
-    }
-    if (v.image_url && v.image_url !== '/1001102628.jpg' && v.image_url !== normalizedPrimaryImage) {
-      return { ...v, has_custom_image: true };
-    }
-    return { ...v, image_url: normalizedPrimaryImage, has_custom_image: false };
+
+    return {
+      ...v,
+      price: vPrice,
+      discounted_price: vDiscount,
+      stock_quantity: Number(v.stock_quantity || 0),
+      image_url: img,
+      has_custom_image: Boolean(v.has_custom_image),
+    };
   });
 
   const productWithImages = {
@@ -934,7 +961,7 @@ export async function createOrderAtomic(orderPayload) {
   addNotification({
     user_id: newOrder.user_id,
     title: 'Order Placed Successfully!',
-    message: `Your order #${newOrder.order_reference} has been received. Total: ₦${newOrder.total_amount.toLocaleString()}`,
+    message: `Your order #${newOrder.order_reference} has been received. Total: ₦${Number(newOrder.total_amount || 0).toLocaleString('en-NG')}`,
     type: 'order',
     link: `/dashboard/orders/${newOrder.order_reference}`,
   });

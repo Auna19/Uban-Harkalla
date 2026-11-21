@@ -1,6 +1,7 @@
 import React from 'react';
 import { Truck, Store, MapPin, CheckCircle, Clock, ShieldCheck } from 'lucide-react';
 import ScrollReveal from '../common/ScrollReveal';
+import { formatPrice } from '../../utils/formatters';
 
 export default function DeliveryInfoSection({ locations, pickupContent }) {
   const pickupAddress =
@@ -75,7 +76,7 @@ export default function DeliveryInfoSection({ locations, pickupContent }) {
                                 FREE (₦0)
                               </span>
                             ) : (
-                              <span className="text-slate-950">₦{loc.fee.toLocaleString()}</span>
+                              <span className="text-slate-950">{formatPrice(loc.fee)}</span>
                             )}
                           </td>
                         </tr>

@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/common/ProductCard';
 import ScrollReveal from '../../components/common/ScrollReveal';
 import TiltCard from '../../components/common/TiltCard';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   ShoppingBag,
   ShieldCheck,
@@ -70,15 +71,20 @@ export default function ProductDetailPage() {
           const firstImg =
             (found.images && found.images[0]) || found.image_url || '/1001102628.jpg';
           setActiveImage(firstImg);
+          setLoading(false);
 
           // Initialize default attributes from first variation
           if (found.variations && found.variations.length > 0) {
             setSelectedAttributes(found.variations[0].attributes || {});
           }
 
-          // Fetch related products in same category
-          const allProds = await getProducts({ category: found.category_id, activeOnly: true });
-          setRelatedProducts(allProds.filter((p) => p.id !== found.id).slice(0, 4));
+          // Fetch related products in background
+          try {
+            const allProds = await getProducts({ category: found.category_id, activeOnly: true });
+            setRelatedProducts(allProds.filter((p) => p.id !== found.id).slice(0, 4));
+          } catch (_) {}
+        } else {
+          setLoading(false);
         }
       } catch (err) {
         console.error('Error loading product:', err);
@@ -133,13 +139,23 @@ export default function ProductDetailPage() {
   }, [matchedVariation, product]);
 
   // Calculate pricing & stock based on matched variation
-  const currentPrice = matchedVariation
-    ? matchedVariation.discounted_price || matchedVariation.price
-    : product?.discounted_price || product?.base_price || 0;
+  const originalPrice = Number(
+    (matchedVariation && matchedVariation.price) ||
+    product?.base_price ||
+    0
+  );
 
-  const originalPrice = matchedVariation
-    ? matchedVariation.price
-    : product?.base_price || 0;
+  const varDiscount = matchedVariation?.discounted_price ? Number(matchedVariation.discounted_price) : null;
+  const prodDiscount = product?.discounted_price ? Number(product.discounted_price) : null;
+
+  const effectiveDiscount = (varDiscount && varDiscount > 0 && varDiscount < originalPrice)
+    ? varDiscount
+    : (prodDiscount && prodDiscount > 0 && prodDiscount < originalPrice)
+      ? prodDiscount
+      : null;
+
+  const currentPrice = effectiveDiscount !== null ? effectiveDiscount : originalPrice;
+  const hasDiscount = effectiveDiscount !== null && originalPrice > currentPrice;
 
   const currentStock = matchedVariation
     ? matchedVariation.stock_quantity
@@ -311,9 +327,9 @@ export default function ProductDetailPage() {
                       Featured Item
                     </span>
                   )}
-                  {originalPrice > currentPrice && (
+                  {hasDiscount && (
                     <span className="absolute top-4 right-4 px-3.5 py-1.5 bg-rose-600 text-white text-[11px] font-black uppercase tracking-wider rounded-full shadow-md">
-                      Save ₦{(originalPrice - currentPrice).toLocaleString()}
+                      Save {formatPrice(originalPrice - currentPrice)}
                     </span>
                   )}
                 </div>
@@ -365,15 +381,15 @@ export default function ProductDetailPage() {
               {/* Pricing Display */}
               <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-50 via-emerald-50/20 to-slate-50 border border-slate-200/80 flex items-baseline gap-3 flex-wrap">
                 <span className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
-                  ₦{currentPrice.toLocaleString()}
+                  {formatPrice(currentPrice)}
                 </span>
-                {originalPrice > currentPrice && (
+                {hasDiscount && (
                   <>
                     <span className="text-base text-slate-400 line-through font-semibold">
-                      ₦{originalPrice.toLocaleString()}
+                      {formatPrice(originalPrice)}
                     </span>
                     <span className="text-xs font-black text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Save ₦{(originalPrice - currentPrice).toLocaleString()}
+                      Save {formatPrice(originalPrice - currentPrice)}
                     </span>
                   </>
                 )}
@@ -489,7 +505,7 @@ export default function ProductDetailPage() {
                   .map(([k, v]) => `${k}: ${v}`)
                   .join(', ');
                 const specsSummary = variantDetails ? ` (${variantDetails})` : '';
-                const waMessage = `Hello UBAN HARKALLA, I want to order ${product.name}${specsSummary} at ₦${currentPrice.toLocaleString()}. Please confirm availability.`;
+                const waMessage = `Hello UBAN HARKALLA, I want to order ${product.name}${specsSummary} at ${formatPrice(currentPrice)}. Please confirm availability.`;
                 const waUrl = `https://wa.me/2348123456789?text=${encodeURIComponent(waMessage)}`;
 
                 return (
@@ -668,7 +684,7 @@ export default function ProductDetailPage() {
                     )}
                     <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
                       <span className="text-slate-400 font-semibold">Active Price:</span>
-                      <span className="text-lg font-black text-emerald-400">₦{currentPrice?.toLocaleString()}</span>
+                      <span className="text-lg font-black text-emerald-400">{formatPrice(currentPrice)}</span>
                     </div>
                   </div>
 
@@ -722,7 +738,7 @@ export default function ProductDetailPage() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 px-4 z-40 flex items-center justify-between gap-3 shadow-lg">
         <div>
           <span className="text-xs text-slate-400 line-clamp-1">{product.name}</span>
-          <span className="text-lg font-black text-slate-950">₦{currentPrice.toLocaleString()}</span>
+          <span className="text-lg font-black text-slate-950">{formatPrice(currentPrice)}</span>
         </div>
         <button
           onClick={handleAddToCart}

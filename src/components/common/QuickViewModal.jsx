@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Check, ShoppingBag, Eye, Star, ShieldCheck, Truck, ArrowRight, Sparkles } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Link } from 'react-router-dom';
+import { formatPrice, formatNumber } from '../../utils/formatters';
 
 export default function QuickViewModal({ product, isOpen, onClose }) {
   if (!isOpen || !product) return null;
@@ -59,13 +60,23 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
     (matchedVariation && matchedVariation.image_url) ||
     '/1001102628.jpg';
 
-  const currentPrice = matchedVariation
-    ? matchedVariation.discounted_price || matchedVariation.price
-    : product.discounted_price || product.base_price;
+  const originalPrice = Number(
+    (matchedVariation && matchedVariation.price) ||
+    product.base_price ||
+    0
+  );
 
-  const originalPrice = matchedVariation
-    ? matchedVariation.price
-    : product.base_price || currentPrice;
+  const varDiscount = matchedVariation?.discounted_price ? Number(matchedVariation.discounted_price) : null;
+  const prodDiscount = product.discounted_price ? Number(product.discounted_price) : null;
+
+  const effectiveDiscount = (varDiscount && varDiscount > 0 && varDiscount < originalPrice)
+    ? varDiscount
+    : (prodDiscount && prodDiscount > 0 && prodDiscount < originalPrice)
+      ? prodDiscount
+      : null;
+
+  const currentPrice = effectiveDiscount !== null ? effectiveDiscount : originalPrice;
+  const hasDiscount = effectiveDiscount !== null && originalPrice > currentPrice;
 
   const stock = matchedVariation ? matchedVariation.stock_quantity : (product.stock_quantity || 0);
 
@@ -169,15 +180,15 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
             {/* Pricing */}
             <div className="flex items-baseline gap-2.5 mt-2.5 flex-wrap">
               <span className="text-2xl font-black text-slate-950">
-                ₦{currentPrice?.toLocaleString()}
+                {formatPrice(currentPrice)}
               </span>
-              {originalPrice > currentPrice && (
+              {hasDiscount && (
                 <>
                   <span className="text-xs text-slate-400 line-through font-semibold">
-                    ₦{originalPrice?.toLocaleString()}
+                    {formatPrice(originalPrice)}
                   </span>
                   <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    Save ₦{(originalPrice - currentPrice).toLocaleString()}
+                    Save {formatPrice(originalPrice - currentPrice)}
                   </span>
                 </>
               )}
@@ -205,8 +216,8 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
                             type="button"
                             onClick={() => handleSelectAttribute(attrKey, v)}
                             className={`px-3 py-1.5 text-xs rounded-xl font-bold border transition-all cursor-pointer flex items-center gap-1 ${isSelected
-                                ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                              ? 'bg-slate-950 text-white border-slate-950 shadow-xs'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                               }`}
                           >
                             {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
@@ -259,10 +270,10 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
               onClick={handleAddToCart}
               disabled={stock <= 0}
               className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${added
-                  ? 'bg-emerald-700 text-white shadow-emerald-700/30'
-                  : stock > 0
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:shadow-lg'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                ? 'bg-emerald-700 text-white shadow-emerald-700/30'
+                : stock > 0
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:shadow-lg'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                 }`}
             >
               {added ? (
@@ -273,7 +284,7 @@ export default function QuickViewModal({ product, isOpen, onClose }) {
               ) : (
                 <>
                   <ShoppingBag className="w-4 h-4" />
-                  <span>{stock > 0 ? `Add to Cart • ₦${(currentPrice * quantity).toLocaleString()}` : 'Out of Stock'}</span>
+                  <span>{stock > 0 ? `Add to Cart • ${formatPrice(currentPrice * quantity)}` : 'Out of Stock'}</span>
                 </>
               )}
             </button>
