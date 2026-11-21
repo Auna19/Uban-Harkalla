@@ -17,6 +17,7 @@
 | **BUG-004** | Admin Product Inventory | Low | P3 (Medium) | **FIXED & VERIFIED** | Missing loading spinner & empty state in inventory table during Neon DB async fetch |
 | **BUG-005** | Playwright Test Concurrency | Medium | P2 (High) | **FIXED & VERIFIED** | 4 parallel workers saturated serverless DB pool; reduced to 2 with resilient timeouts |
 | **BUG-006** | Checkout Payment Validation | Low | P3 (Medium) | **FIXED & VERIFIED** | Bank transfer session ID mandatory validation not handled in test fixture |
+| **BUG-007** | Admin Product & Image Sync | High | P1 (Urgent) | **FIXED & VERIFIED** | Neon UUID type violation, omitted SQL columns, and missing cross-browser SWR sync |
 
 ---
 
@@ -144,14 +145,47 @@
 
 ---
 
+### BUG-007: Admin Product Creation and Cross-Browser Image Sync Gap
+- **Affected Components:**
+  - `src/services/dataService.js`
+  - `src/pages/admin/AdminProductFormPage.jsx`
+  - `src/pages/admin/AdminProductsPage.jsx`
+  - `src/pages/public/HomePage.jsx`
+  - `src/pages/public/ShopPage.jsx`
+  - `src/components/home/FeaturedProducts.jsx`
+- **Severity:** High
+- **Priority:** P1 (Urgent)
+- **Discovered During:** User reported: *"I noticed on the admin after updating images and creating products, it doesn't reflects on the users end and on the landing page so fix it"*
+- **Observed Behavior:**
+  - Creating a product or updating product photos in Admin appeared to work locally, but opening the site in a fresh browser (e.g. Edge, Opera, or incognito) failed to show the newly added items or reflected stale placeholder images.
+- **Root Cause Analysis:**
+  1. **Postgres Type Violation:** The `category_id` column in Neon Lakebase Postgres is of type `UUID`. The admin form provided legacy string IDs (e.g., `'cat-1'`), which threw `invalid input syntax for type uuid: "cat-1"`. The SQL query rejected the insert and silently fell back to browser `localStorage` only.
+  2. **Incomplete Column Set in SQL:** The SQL `INSERT` and `UPDATE` statements in `dataService.js` lacked `category_id`, `brand_id`, `images`, and `specifications` columns, omitting image arrays from database rows.
+  3. **No Direct Image URL Entry:** The form only allowed uploading local files as base64 strings rather than web URLs, creating large storage payloads that did not distribute smoothly across devices.
+  4. **Landing Page Category & Product Filtering:** `FeaturedProducts.jsx` only matched legacy category IDs and strictly showed featured products; new additions were excluded from the landing grid.
+  5. **Cross-Browser Hydration:** Fresh browser contexts loaded an empty state without SWR cache revalidation, causing loading hangs.
+- **Resolution Implemented:**
+  1. **UUID Resolution:** Added robust category and brand UUID resolvers in `dataService.js` `saveProduct()` to convert legacy IDs (`'cat-1'`, `'iphones'`) into genuine Neon database UUIDs before executing SQL.
+  2. **Complete SQL Upserts:** Included `category_id`, `brand_id`, `images`, and `specifications` in both `INSERT` and `UPDATE` queries with `ON CONFLICT (slug) DO UPDATE`.
+  3. **URL Input Field:** Added a dedicated Image URL input and "Add Image URL" button to `AdminProductFormPage.jsx`.
+  4. **Landing Page Grid Enhancement:** Updated `FeaturedProducts.jsx` and `HomePage.jsx` to render up to 16 active products (featured items followed by new arrivals) and matched category slugs and UUIDs dynamically.
+  5. **SWR Cache Synchronization:** Initialized state in `ShopPage.jsx`, `HomePage.jsx`, and `AdminProductsPage.jsx` from `localStorage` while seamlessly revalidating from Neon in the background.
+- **Verification Evidence:**
+  - Automated tests in `e2e/07-admin-storefront-sync.spec.js`:
+    - `TC-SYNC-001` (Admin creates product -> Reflected in separate client session) **PASSED**.
+    - `TC-SYNC-002` (Admin updates image -> Reflected on detail page in separate client session) **PASSED**.
+    - `TC-SYNC-003` (Category image update in admin -> Reflected on landing cards) **PASSED**.
+
+---
+
 ## 3. Bug Classification Matrix by Severity
 
 | Severity Level | Count | Fixed | Verified |
 |---|---|---|---|
 | **Critical / Blocker** | 0 | 0 | 0 |
-| **High / Major** | 1 | 1 | 1 |
+| **High / Major** | 2 | 2 | 2 |
 | **Medium** | 3 | 3 | 3 |
 | **Low / Minor** | 2 | 2 | 2 |
-| **Total Bugs** | **6** | **6** | **6** |
+| **Total Bugs** | **7** | **7** | **7** |
 
 **Bug Resolution Rate:** **100.0%**

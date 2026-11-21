@@ -29,6 +29,7 @@ const STORAGE_KEYS = {
 // Helper to safely load or initialize data
 function getStoredData(key, fallback) {
   try {
+    if (typeof localStorage === 'undefined') return fallback;
     const raw = localStorage.getItem(key);
     if (!raw) {
       localStorage.setItem(key, JSON.stringify(fallback));
@@ -43,19 +44,37 @@ function getStoredData(key, fallback) {
 
 function saveStoredData(key, data) {
   try {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem(key, JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent('ubh-data-changed', { detail: { key } }));
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('ubh-data-changed', { detail: { key } }));
+    }
   } catch (err) {
     console.error(`Error saving ${key} to storage:`, err);
     if (err && (err.name === 'QuotaExceededError' || err.code === 22)) {
       try {
         localStorage.removeItem('ubh_notifications');
         localStorage.setItem(key, JSON.stringify(data));
-        window.dispatchEvent(new CustomEvent('ubh-data-changed', { detail: { key } }));
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('ubh-data-changed', { detail: { key } }));
+        }
       } catch (retryErr) {
         console.error('Storage quota exceeded on retry:', retryErr);
       }
     }
+  }
+}
+
+// Helper to enforce strict timeouts on network SQL queries to prevent UI hanging
+async function executeWithTimeout(promise, timeoutMs = 15000) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Neon query timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -65,7 +84,10 @@ function saveStoredData(key, data) {
 export async function getCategories() {
   if (isNeonConfigured && sql) {
     try {
-      const rows = await sql`SELECT * FROM categories WHERE is_active = true ORDER BY display_order ASC`;
+      const rows = await executeWithTimeout(
+        sql`SELECT * FROM categories WHERE is_active = true ORDER BY display_order ASC, created_at ASC`,
+        15000
+      );
       if (rows && rows.length > 0) {
         try {
           localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(rows));
@@ -111,16 +133,40 @@ export async function saveCategory(category) {
           WHERE id = ${category.id}
         `;
       } else {
-        await sql`
-          INSERT INTO categories (name, slug, description, image_url, is_active, display_order)
-          VALUES (${category.name}, ${category.slug}, ${category.description || ''}, ${category.image_url || ''}, ${category.is_active ?? true}, ${category.display_order || 0})
-          ON CONFLICT (slug) DO UPDATE SET
-            name = EXCLUDED.name,
-            description = EXCLUDED.description,
-            image_url = EXCLUDED.image_url,
-            is_active = EXCLUDED.is_active,
-            display_order = EXCLUDED.display_order
-        `;
+        const neonCats = await sql`SELECT id, slug, name FROM categories`;
+        const existingCat = neonCats.find(
+          (c) =>
+            c.id === category.id ||
+            c.slug === category.slug ||
+            c.name.toLowerCase() === category.name.toLowerCase() ||
+            (category.id === 'cat-1' && (c.slug.includes('iphone') || c.name.toLowerCase().includes('iphone'))) ||
+            (category.id === 'cat-2' && (c.slug.includes('android') || c.name.toLowerCase().includes('android'))) ||
+            (category.id === 'cat-3' && (c.slug.includes('gadget') || c.name.toLowerCase().includes('gadget'))) ||
+            (category.id === 'cat-4' && (c.slug.includes('accessor') || c.name.toLowerCase().includes('accessor')))
+        );
+
+        if (existingCat) {
+          await sql`
+            UPDATE categories
+            SET name = ${category.name},
+                description = ${category.description || ''},
+                image_url = ${category.image_url || ''},
+                is_active = ${category.is_active ?? true},
+                display_order = ${category.display_order || 0}
+            WHERE id = ${existingCat.id}
+          `;
+        } else {
+          await sql`
+            INSERT INTO categories (name, slug, description, image_url, is_active, display_order)
+            VALUES (${category.name}, ${category.slug}, ${category.description || ''}, ${category.image_url || ''}, ${category.is_active ?? true}, ${category.display_order || 0})
+            ON CONFLICT (slug) DO UPDATE SET
+              name = EXCLUDED.name,
+              description = EXCLUDED.description,
+              image_url = EXCLUDED.image_url,
+              is_active = EXCLUDED.is_active,
+              display_order = EXCLUDED.display_order
+          `;
+        }
       }
     } catch (e) {
       console.warn('Neon category upsert warning:', e);
@@ -136,7 +182,7 @@ export async function deleteCategory(id) {
 
   if (isNeonConfigured && sql) {
     try {
-      await sql`DELETE FROM categories WHERE id = ${id}`;
+      await sql`DELETE FROM categories WHERE id::text = ${id} OR slug = ${id}`;
     } catch (e) {
       console.warn('Neon category delete warning:', e);
     }
@@ -224,23 +270,29 @@ export async function getProducts(filters = {}) {
 
   if (isNeonConfigured && sql) {
     try {
-      const neonRows = await sql`
-        SELECT p.*,
-               COALESCE(
-                 (SELECT json_agg(v.*) FROM product_variations v WHERE v.product_id = p.id),
-                 '[]'::json
-               ) as variations
-        FROM products p
-        ORDER BY p.created_at DESC
-      `;
+      const neonRows = await executeWithTimeout(
+        sql`
+          SELECT p.*,
+                 c.name as category_name, c.slug as category_slug,
+                 b.name as brand_name, b.slug as brand_slug,
+                 COALESCE(
+                   (SELECT json_agg(v.*) FROM product_variations v WHERE v.product_id = p.id),
+                   '[]'::json
+                 ) as variations
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          LEFT JOIN brands b ON p.brand_id = b.id
+          ORDER BY p.created_at DESC
+        `,
+        15000
+      );
       if (neonRows && neonRows.length > 0) {
-        const neonMap = new Map();
-        neonRows.forEach((np) => {
+        const neonList = neonRows.map((np) => {
           const images = Array.isArray(np.images)
             ? np.images
             : (typeof np.images === 'string' ? JSON.parse(np.images || '[]') : []);
           const primaryImg = images[0] || np.image_url || '/1001102631.jpg';
-          const formatted = {
+          return {
             ...np,
             base_price: Number(np.base_price),
             discounted_price: np.discounted_price ? Number(np.discounted_price) : null,
@@ -249,34 +301,18 @@ export async function getProducts(filters = {}) {
             is_active: Boolean(np.is_active),
             images: images.length > 0 ? images : [primaryImg],
             image_url: primaryImg,
+            category_name: np.category_name,
+            category_slug: np.category_slug,
+            brand_name: np.brand_name,
+            brand_slug: np.brand_slug,
             variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : undefined,
           };
-          if (np.slug) neonMap.set(np.slug, formatted);
-          if (np.id) neonMap.set(np.id, formatted);
         });
 
-        // Overlay Neon updates over local / initial products
-        products = products.map((p) => {
-          const fromNeon = neonMap.get(p.slug) || neonMap.get(p.id);
-          if (fromNeon) {
-            return {
-              ...p,
-              ...fromNeon,
-              variations: fromNeon.variations && fromNeon.variations.length > 0 ? fromNeon.variations : p.variations,
-            };
-          }
-          return p;
-        });
+        // Authoritative database source
+        products = neonList;
 
-        // Append any new products in Neon that weren't in initial
-        neonRows.forEach((np) => {
-          if (!products.some((p) => p.slug === np.slug || p.id === np.id)) {
-            const formatted = neonMap.get(np.slug) || neonMap.get(np.id);
-            if (formatted) products.unshift(formatted);
-          }
-        });
-
-        // Persist the fresh merged state to storage for fast caching
+        // Persist fresh canonical state to storage for fast caching
         try {
           localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
         } catch (_) { }
@@ -288,12 +324,18 @@ export async function getProducts(filters = {}) {
 
   if (filters.category) {
     products = products.filter(
-      (p) => p.category_id === filters.category || p.category_name?.toLowerCase() === filters.category.toLowerCase()
+      (p) =>
+        p.category_id === filters.category ||
+        p.category_slug === filters.category ||
+        p.category_name?.toLowerCase() === filters.category.toLowerCase()
     );
   }
   if (filters.brand) {
     products = products.filter(
-      (p) => p.brand_id === filters.brand || p.brand_name?.toLowerCase() === filters.brand.toLowerCase()
+      (p) =>
+        p.brand_id === filters.brand ||
+        p.brand_slug === filters.brand ||
+        p.brand_name?.toLowerCase() === filters.brand.toLowerCase()
     );
   }
   if (filters.featured !== undefined) {
@@ -341,7 +383,6 @@ export async function getProducts(filters = {}) {
         break;
       case 'newest':
       default:
-        // Keep order or newest
         break;
     }
   }
@@ -352,32 +393,41 @@ export async function getProducts(filters = {}) {
 export async function getProductBySlug(slug) {
   if (isNeonConfigured && sql) {
     try {
-      const rows = await sql`
-        SELECT p.*,
-               COALESCE(
-                 (SELECT json_agg(v.*) FROM product_variations v WHERE v.product_id = p.id),
-                 '[]'::json
-               ) as variations
-        FROM products p
-        WHERE p.slug = ${slug} OR p.id::text = ${slug}
-        LIMIT 1
-      `;
+      const rows = await executeWithTimeout(
+        sql`
+          SELECT p.*,
+                 c.name as category_name, c.slug as category_slug,
+                 b.name as brand_name, b.slug as brand_slug,
+                 COALESCE(
+                   (SELECT json_agg(v.*) FROM product_variations v WHERE v.product_id = p.id),
+                   '[]'::json
+                 ) as variations
+          FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          LEFT JOIN brands b ON p.brand_id = b.id
+          WHERE p.slug = ${slug} OR p.id::text = ${slug}
+          LIMIT 1
+        `,
+        7000
+      );
       if (rows && rows.length > 0) {
         const np = rows[0];
-        const local = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS).find((p) => p.slug === slug || p.id === slug);
         const images = Array.isArray(np.images) ? np.images : (typeof np.images === 'string' ? JSON.parse(np.images || '[]') : []);
-        const primaryImg = images[0] || np.image_url || local?.image_url || '/1001102631.jpg';
+        const primaryImg = images[0] || np.image_url || '/1001102631.jpg';
         return {
-          ...(local || {}),
           ...np,
           base_price: Number(np.base_price),
           discounted_price: np.discounted_price ? Number(np.discounted_price) : null,
           stock_quantity: Number(np.stock_quantity || 0),
           is_featured: Boolean(np.is_featured),
           is_active: Boolean(np.is_active),
-          images: images.length > 0 ? images : (local?.images || [primaryImg]),
+          images: images.length > 0 ? images : [primaryImg],
           image_url: primaryImg,
-          variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : local?.variations,
+          category_name: np.category_name,
+          category_slug: np.category_slug,
+          brand_name: np.brand_name,
+          brand_slug: np.brand_slug,
+          variations: Array.isArray(np.variations) && np.variations.length > 0 ? np.variations : undefined,
         };
       }
     } catch (e) {
@@ -404,7 +454,6 @@ export async function saveProduct(product) {
     if (v.has_custom_image === true) {
       return v;
     }
-    // If undefined: if an explicit non-placeholder image_url is provided, preserve as custom
     if (v.image_url && v.image_url !== '/1001102628.jpg' && v.image_url !== normalizedPrimaryImage) {
       return { ...v, has_custom_image: true };
     }
@@ -434,7 +483,7 @@ export async function saveProduct(product) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_active: product.is_active ?? true,
-      is_featured: product.is_featured ?? false,
+      is_featured: product.is_featured ?? true,
     };
     updated = [newProduct, ...current];
   }
@@ -445,6 +494,48 @@ export async function saveProduct(product) {
       const imagesJson = JSON.stringify(productWithImages.images || [normalizedPrimaryImage]);
       const isUuid = product.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.id);
       
+      // Resolve category_id to valid Neon UUID
+      let resolvedCategoryId = null;
+      if (product.category_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.category_id)) {
+        resolvedCategoryId = product.category_id;
+      } else {
+        const neonCats = await sql`SELECT id, slug, name FROM categories`;
+        const matchedCat = neonCats.find(
+          (c) =>
+            c.id === product.category_id ||
+            c.slug === product.category_id ||
+            c.name.toLowerCase() === (product.category_name || '').toLowerCase() ||
+            (product.category_id === 'cat-1' && (c.slug.includes('iphone') || c.name.toLowerCase().includes('iphone'))) ||
+            (product.category_id === 'cat-2' && (c.slug.includes('android') || c.name.toLowerCase().includes('android'))) ||
+            (product.category_id === 'cat-3' && (c.slug.includes('gadget') || c.name.toLowerCase().includes('gadget'))) ||
+            (product.category_id === 'cat-4' && (c.slug.includes('accessor') || c.name.toLowerCase().includes('accessor')))
+        );
+        if (matchedCat) {
+          resolvedCategoryId = matchedCat.id;
+        } else if (neonCats.length > 0) {
+          resolvedCategoryId = neonCats[0].id;
+        }
+      }
+
+      // Resolve brand_id to valid Neon UUID
+      let resolvedBrandId = null;
+      if (product.brand_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.brand_id)) {
+        resolvedBrandId = product.brand_id;
+      } else {
+        const neonBrands = await sql`SELECT id, slug, name FROM brands`;
+        const matchedBrand = neonBrands.find(
+          (b) =>
+            b.id === product.brand_id ||
+            b.slug === product.brand_id ||
+            b.name.toLowerCase() === (product.brand_name || '').toLowerCase() ||
+            product.slug?.toLowerCase().includes(b.slug) ||
+            product.name?.toLowerCase().includes(b.name.toLowerCase())
+        );
+        if (matchedBrand) {
+          resolvedBrandId = matchedBrand.id;
+        }
+      }
+
       let savedProductId = isUuid ? product.id : null;
 
       if (isUuid) {
@@ -457,16 +548,28 @@ export async function saveProduct(product) {
               short_description = ${product.short_description || ''},
               description = ${product.description || ''},
               stock_quantity = ${product.stock_quantity || 0},
-              is_featured = ${product.is_featured || false},
+              is_featured = ${product.is_featured ?? true},
               is_active = ${product.is_active ?? true},
+              category_id = ${resolvedCategoryId},
+              brand_id = ${resolvedBrandId},
               images = ${imagesJson}::jsonb,
+              specifications = ${JSON.stringify(product.specifications || {})}::jsonb,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = ${product.id}
         `;
       } else {
         const rows = await sql`
-          INSERT INTO products (name, slug, base_price, discounted_price, short_description, description, stock_quantity, is_featured, is_active, images)
-          VALUES (${product.name}, ${product.slug}, ${product.base_price || 0}, ${product.discounted_price || null}, ${product.short_description || ''}, ${product.description || ''}, ${product.stock_quantity || 0}, ${product.is_featured || false}, ${product.is_active ?? true}, ${imagesJson}::jsonb)
+          INSERT INTO products (
+            name, slug, base_price, discounted_price, short_description, description,
+            stock_quantity, is_featured, is_active, category_id, brand_id, images, specifications
+          )
+          VALUES (
+            ${product.name}, ${product.slug}, ${product.base_price || 0}, ${product.discounted_price || null},
+            ${product.short_description || ''}, ${product.description || ''}, ${product.stock_quantity || 0},
+            ${product.is_featured ?? true}, ${product.is_active ?? true},
+            ${resolvedCategoryId}, ${resolvedBrandId}, ${imagesJson}::jsonb,
+            ${JSON.stringify(product.specifications || {})}::jsonb
+          )
           ON CONFLICT (slug) DO UPDATE SET
             name = EXCLUDED.name,
             base_price = EXCLUDED.base_price,
@@ -476,7 +579,10 @@ export async function saveProduct(product) {
             stock_quantity = EXCLUDED.stock_quantity,
             is_featured = EXCLUDED.is_featured,
             is_active = EXCLUDED.is_active,
+            category_id = EXCLUDED.category_id,
+            brand_id = EXCLUDED.brand_id,
             images = EXCLUDED.images,
+            specifications = EXCLUDED.specifications,
             updated_at = CURRENT_TIMESTAMP
           RETURNING id
         `;
@@ -521,12 +627,12 @@ export async function saveProduct(product) {
 
 export async function deleteProduct(id) {
   const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-  const updated = current.filter((p) => p.id !== id);
+  const updated = current.filter((p) => p.id !== id && p.slug !== id);
   saveStoredData(STORAGE_KEYS.PRODUCTS, updated);
 
   if (isNeonConfigured && sql) {
     try {
-      await sql`DELETE FROM products WHERE id = ${id}`;
+      await sql`DELETE FROM products WHERE id::text = ${String(id)} OR slug = ${String(id)}`;
     } catch (e) {
       console.warn('Neon product delete warning:', e);
     }
@@ -899,11 +1005,28 @@ export function markNotificationAsRead(id) {
 // WEBSITE CONTENT & TESTIMONIALS & SETTINGS
 // ------------------------------------------------------------------------------
 export async function getWebsiteContent() {
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`SELECT section_key, content FROM website_content`;
+      if (rows && rows.length > 0) {
+        const merged = { ...INITIAL_WEBSITE_CONTENT };
+        rows.forEach((r) => {
+          if (r.section_key && r.content) {
+            merged[r.section_key] = typeof r.content === 'string' ? JSON.parse(r.content) : r.content;
+          }
+        });
+        saveStoredData(STORAGE_KEYS.WEBSITE_CONTENT, merged);
+        return merged;
+      }
+    } catch (e) {
+      console.warn('Neon website content query warning:', e);
+    }
+  }
   return getStoredData(STORAGE_KEYS.WEBSITE_CONTENT, INITIAL_WEBSITE_CONTENT);
 }
 
 export async function saveWebsiteContent(sectionKey, content) {
-  const current = getStoredData(STORAGE_KEYS.WEBSITE_CONTENT, INITIAL_WEBSITE_CONTENT);
+  const current = await getWebsiteContent();
   const updated = {
     ...current,
     [sectionKey]: {
@@ -912,6 +1035,21 @@ export async function saveWebsiteContent(sectionKey, content) {
     },
   };
   saveStoredData(STORAGE_KEYS.WEBSITE_CONTENT, updated);
+
+  if (isNeonConfigured && sql) {
+    try {
+      const contentJson = JSON.stringify(updated[sectionKey] || {});
+      await sql`
+        INSERT INTO website_content (section_key, content, updated_at)
+        VALUES (${sectionKey}, ${contentJson}::jsonb, CURRENT_TIMESTAMP)
+        ON CONFLICT (section_key) DO UPDATE SET
+          content = EXCLUDED.content,
+          updated_at = CURRENT_TIMESTAMP
+      `;
+    } catch (e) {
+      console.warn('Neon website content save warning:', e);
+    }
+  }
   return updated;
 }
 
@@ -950,13 +1088,47 @@ export async function deleteTestimonial(id) {
 }
 
 export async function getBusinessSettings() {
+  if (isNeonConfigured && sql) {
+    try {
+      const rows = await sql`SELECT key, value FROM business_settings`;
+      if (rows && rows.length > 0) {
+        const merged = { ...INITIAL_BUSINESS_SETTINGS };
+        rows.forEach((r) => {
+          if (r.key && r.value !== undefined) {
+            merged[r.key] = typeof r.value === 'string' ? JSON.parse(r.value) : r.value;
+          }
+        });
+        saveStoredData(STORAGE_KEYS.SETTINGS, merged);
+        return merged;
+      }
+    } catch (e) {
+      console.warn('Neon business settings query warning:', e);
+    }
+  }
   return getStoredData(STORAGE_KEYS.SETTINGS, INITIAL_BUSINESS_SETTINGS);
 }
 
 export async function saveBusinessSettings(newSettings) {
-  const current = getStoredData(STORAGE_KEYS.SETTINGS, INITIAL_BUSINESS_SETTINGS);
+  const current = await getBusinessSettings();
   const updated = { ...current, ...newSettings };
   saveStoredData(STORAGE_KEYS.SETTINGS, updated);
+
+  if (isNeonConfigured && sql) {
+    try {
+      for (const [key, value] of Object.entries(newSettings)) {
+        const valJson = JSON.stringify(value);
+        await sql`
+          INSERT INTO business_settings (key, value, updated_at)
+          VALUES (${key}, ${valJson}::jsonb, CURRENT_TIMESTAMP)
+          ON CONFLICT (key) DO UPDATE SET
+            value = EXCLUDED.value,
+            updated_at = CURRENT_TIMESTAMP
+        `;
+      }
+    } catch (e) {
+      console.warn('Neon business settings save warning:', e);
+    }
+  }
   return updated;
 }
 

@@ -15,11 +15,11 @@ A comprehensive automated End-to-End (E2E) regression test suite was constructed
 All identified defects across UI layout, text truncation, search interactivity, catalog loading states, admin inventory display, and checkout validation were systematically resolved in the codebase and re-tested.
 
 ### Key Quality Metrics
-- **Total Test Cases Executed:** 21
-- **Passed:** 21 (100.0%)
+- **Total Test Cases Executed:** 24
+- **Passed:** 24 (100.0%)
 - **Failed:** 0 (0.0%)
 - **Flaky / Retried:** 0
-- **Total Execution Duration:** 1.1 minutes
+- **Total Execution Duration:** 1.5 minutes
 - **Automation Status:** **PASSED — PRODUCTION READY**
 
 ---
@@ -83,9 +83,18 @@ All identified defects across UI layout, text truncation, search interactivity, 
 
 ---
 
+### Module 7: Admin to Storefront Cross-Browser Data & Image Sync (`e2e/07-admin-storefront-sync.spec.js`)
+| Test ID | Test Scenario Description | Duration | Status |
+|---|---|---|---|
+| **TC-SYNC-001** | Admin creates product with image -> Reflected on Landing Page & Shop in clean session | 21.8s | **PASSED** |
+| **TC-SYNC-002** | Admin updates existing product image -> Reflected on Product Details Page in clean session | 17.8s | **PASSED** |
+| **TC-SYNC-003** | Category Image Update in Admin reflects on Landing Page category cards | 11.3s | **PASSED** |
+
+---
+
 ## 3. Bug Resolution & Verification Summary
 
-During the execution cycle, 6 defects were identified and cataloged in [QA/BUG_SHEET.md](file:///c:/Users/USER/Videos/DSN%20Automation/Uban%20Harkalla/QA/BUG_SHEET.md). All 6 issues were resolved in source code and verified:
+During the execution cycle, 7 defects were identified and cataloged in [QA/BUG_SHEET.md](file:///c:/Users/USER/Videos/DSN%20Automation/Uban%20Harkalla/QA/BUG_SHEET.md). All 7 issues were resolved in source code and verified:
 
 1. **BUG-001 (Cart Modal Overlap & `undefined` Text):**
    - Fixed property lookup `item.name || item.product_name` in `CartPage.jsx`.
@@ -100,6 +109,10 @@ During the execution cycle, 6 defects were identified and cataloged in [QA/BUG_S
    - Scaled Playwright worker configuration in `playwright.config.js` to 2 workers with resilient timeouts.
 6. **BUG-006 (Missing Transaction Reference in Checkout Test):**
    - Standardized payment method selection with Pay on Delivery and automated session ID generation in `04-cart-checkout.spec.js`.
+7. **BUG-007 (Admin Product Creation & Cross-Browser Image Sync Gap):**
+   - Resolved Postgres UUID type mismatch for categories and brands in `dataService.js`.
+   - Populated missing SQL columns (`category_id`, `brand_id`, `images`, `specifications`) in `INSERT`/`UPDATE`.
+   - Implemented SWR state hydration in `HomePage.jsx` and `ShopPage.jsx` for instant load and seamless background sync across different browsers.
 
 ---
 
@@ -108,7 +121,7 @@ During the execution cycle, 6 defects were identified and cataloged in [QA/BUG_S
 - **Hosting Platform:** Vercel Global Edge Network
 - **Production URL:** `https://uban-harkalla-zeta.vercel.app`
 - **Database Engine:** Neon Lakebase Serverless Postgres (US-East-2)
-- **CI / Git Branch:** `main` (latest commit `579da74`)
+- **CI / Git Branch:** `main`
 - **Browser Tested:** Chromium 134.0 (Headless Shell)
 - **Viewport Dimensions:** 1280 × 720 (Desktop Standard)
 
@@ -116,6 +129,6 @@ During the execution cycle, 6 defects were identified and cataloged in [QA/BUG_S
 
 ## 5. QA Sign-Off & Recommendation
 
-The UBAN HARKALLA e-commerce web platform has achieved **100% test pass rate** across all 21 automated regression test cases. The user experience is verified seamless, responsive, and resilient across both mobile and desktop environments.
+The UBAN HARKALLA e-commerce web platform has achieved **100% test pass rate** across all 24 automated regression test cases. The user experience is verified seamless, responsive, and resilient across both mobile and desktop environments.
 
 **Final Verdict:** **APPROVED FOR PRODUCTION RELEASE**

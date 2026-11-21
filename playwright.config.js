@@ -15,7 +15,7 @@ export default defineConfig({
   workers: 2,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://uban-harkalla-zeta.vercel.app',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || (process.env.USE_LOCAL ? 'http://localhost:3000' : 'https://uban-harkalla-zeta.vercel.app'),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

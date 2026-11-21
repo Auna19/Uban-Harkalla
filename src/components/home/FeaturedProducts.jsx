@@ -13,7 +13,8 @@ export default function FeaturedProducts({ products, categories }) {
     const catObj = typeof cat === 'object' ? cat : categories.find((c) => c.id === catId || c.slug === catId);
 
     if (p.category_id && p.category_id === catId) return true;
-    if (catObj?.slug && p.category_id === catObj.slug) return true;
+    if (catObj?.slug && (p.category_id === catObj.slug || p.category_slug === catObj.slug)) return true;
+    if (catObj?.id && (p.category_id === catObj.id || p.category_slug === catObj.slug)) return true;
 
     const catName = (catObj?.name || '').toLowerCase();
     const catSlug = (catObj?.slug || '').toLowerCase();
@@ -36,14 +37,20 @@ export default function FeaturedProducts({ products, categories }) {
     }
 
     if (catName && pCatName === catName) return true;
+    if (catSlug && pSlug.includes(catSlug)) return true;
     return false;
   };
 
-  const featured = products.filter((p) => p.is_featured);
+  const activeProducts = products.filter((p) => p.is_active !== false);
+  const featured = activeProducts.filter((p) => p.is_featured);
+  const allLandingProducts = [
+    ...featured,
+    ...activeProducts.filter((p) => !p.is_featured),
+  ];
   const displayList =
     selectedCategory === 'all'
-      ? featured
-      : featured.filter((p) => matchCategory(p, selectedCategory));
+      ? allLandingProducts.slice(0, 16)
+      : activeProducts.filter((p) => matchCategory(p, selectedCategory));
 
   return (
     <section className="py-20 sm:py-24 bg-gradient-to-b from-slate-50 via-white to-slate-50 relative overflow-hidden">
@@ -89,10 +96,10 @@ export default function FeaturedProducts({ products, categories }) {
                 : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
                 }`}
             >
-              All Featured ({featured.length})
+              All Products ({allLandingProducts.length})
             </button>
             {categories.map((cat) => {
-              const count = featured.filter((p) => matchCategory(p, cat)).length;
+              const count = activeProducts.filter((p) => matchCategory(p, cat)).length;
               return (
                 <button
                   key={cat.id}

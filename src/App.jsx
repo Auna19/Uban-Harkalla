@@ -131,6 +131,7 @@ export default function App() {
                   <Route path="dashboard" element={<AdminDashboardPage />} />
                   <Route path="products" element={<AdminProductsPage />} />
                   <Route path="products/create" element={<AdminProductFormPage />} />
+                  <Route path="products/new" element={<AdminProductFormPage />} />
                   <Route path="products/:id" element={<AdminProductFormPage />} />
                   <Route path="categories" element={<AdminCategoriesPage />} />
                   <Route path="brands" element={<AdminBrandsPage />} />

@@ -6,10 +6,42 @@ import { Search, Filter, SlidersHorizontal, X, ArrowUpDown, Tag, Sparkles } from
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_products');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
+  const [categories, setCategories] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_categories');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
+  const [brands, setBrands] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_brands');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_products');
+        if (raw && JSON.parse(raw).length > 0) return false;
+      }
+    } catch (_) {}
+    return true;
+  });
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // Filter states
@@ -74,7 +106,8 @@ export default function ShopPage() {
     const catObj = categories.find((c) => c.id === catIdentifier || c.slug === catIdentifier);
 
     if (p.category_id && p.category_id === catIdentifier) return true;
-    if (catObj?.slug && p.category_id === catObj.slug) return true;
+    if (catObj?.slug && (p.category_id === catObj.slug || p.category_slug === catObj.slug)) return true;
+    if (catObj?.id && (p.category_id === catObj.id || p.category_slug === catObj.slug)) return true;
 
     const catName = (catObj?.name || catIdentifier).toLowerCase();
     const catSlug = (catObj?.slug || catIdentifier).toLowerCase();
@@ -449,7 +482,7 @@ export default function ShopPage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div data-testid="shop-loading-skeleton" className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((idx) => (
                   <div key={idx} className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 animate-pulse">
                     <div className="bg-slate-200 aspect-square rounded-2xl w-full"></div>

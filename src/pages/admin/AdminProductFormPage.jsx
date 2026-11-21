@@ -27,7 +27,7 @@ import { useAdminToast } from '../../context/AdminToastContext';
 export default function AdminProductFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isEditing = Boolean(id);
+  const isEditing = Boolean(id && id !== 'create' && id !== 'new');
   const { showToast } = useAdminToast();
 
   const [categories, setCategories] = useState([]);
@@ -47,7 +47,7 @@ export default function AdminProductFormPage() {
   const [basePrice, setBasePrice] = useState(0);
   const [discountedPrice, setDiscountedPrice] = useState(0);
   const [stockQuantity, setStockQuantity] = useState(10);
-  const [isFeatured, setIsFeatured] = useState(false);
+  const [isFeatured, setIsFeatured] = useState(!isEditing);
   const [isActive, setIsActive] = useState(true);
   const [imageUrls, setImageUrls] = useState(['/1001102628.jpg']);
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -322,7 +322,7 @@ export default function AdminProductFormPage() {
           Back to Product Catalog
         </Link>
         <h1 className="text-xl font-bold text-white">
-          {isEditing ? `Edit Product: ${name}` : 'Scaffold New Product'}
+          {isEditing ? `Edit Product: ${name}` : 'Create New Product'}
         </h1>
       </div>
 
@@ -479,24 +479,53 @@ export default function AdminProductFormPage() {
                 </p>
               </div>
 
-              <div>
-                <label
-                  htmlFor="product-local-upload"
-                  className={`inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl cursor-pointer shadow transition-all ${isUploadingImage ? 'opacity-60 cursor-not-allowed' : ''
-                    }`}
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>{isUploadingImage ? 'Processing Image...' : 'Upload Image from Computer'}</span>
-                </label>
-                <input
-                  id="product-local-upload"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  disabled={isUploadingImage}
-                  onChange={handleProductImageUpload}
-                  className="hidden"
-                />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    type="url"
+                    placeholder="Or paste image URL (https://...)"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1 text-xs rounded-xl px-3 py-2 bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newImageUrl.trim()) {
+                        const val = newImageUrl.trim();
+                        setImageUrls((prev) => {
+                          const isPlaceholder = prev.length === 1 && prev[0] === '/1001102628.jpg';
+                          return isPlaceholder ? [val] : [...prev, val];
+                        });
+                        setNewImageUrl('');
+                        showToast('Image URL added to gallery!', 'success');
+                      }
+                    }}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs rounded-xl transition-all whitespace-nowrap"
+                  >
+                    Add Image URL
+                  </button>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="product-local-upload"
+                    className={`inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl cursor-pointer shadow transition-all whitespace-nowrap ${isUploadingImage ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>{isUploadingImage ? 'Processing...' : 'Upload File'}</span>
+                  </label>
+                  <input
+                    id="product-local-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={isUploadingImage}
+                    onChange={handleProductImageUpload}
+                    className="hidden"
+                  />
+                </div>
               </div>
             </div>
 

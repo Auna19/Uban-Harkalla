@@ -21,12 +21,44 @@ import { ArrowRight, Smartphone, Sparkles, Headphones, Cpu } from 'lucide-react'
 
 export default function HomePage() {
   const { triggerLandingPlayback } = useAudio();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [websiteContent, setWebsiteContent] = useState(null);
+  const [products, setProducts] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_products');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
+  const [categories, setCategories] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_categories');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
+  const [websiteContent, setWebsiteContent] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_website_content');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return null;
+  });
   const [deliveryLocations, setDeliveryLocations] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_products');
+        if (raw && JSON.parse(raw).length > 0) return false;
+      }
+    } catch (_) {}
+    return true;
+  });
 
   // Trigger brand audio playback attempt once when landing on Home
   useEffect(() => {

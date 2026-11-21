@@ -18,15 +18,39 @@ import { useAdminToast } from '../../context/AdminToastContext';
 
 export default function AdminProductsPage() {
   const { showToast } = useAdminToast();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_products');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
+  const [categories, setCategories] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_categories');
+        if (raw) return JSON.parse(raw);
+      }
+    } catch (_) {}
+    return [];
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCat, setSelectedCat] = useState('all');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('ubh_products');
+        if (raw && JSON.parse(raw).length > 0) return false;
+      }
+    } catch (_) {}
+    return true;
+  });
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = async (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     try {
       const [prods, cats] = await Promise.all([
         getProducts({ activeOnly: false }),
