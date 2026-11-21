@@ -113,7 +113,8 @@ export default function AdminProductFormPage() {
       image_url: imageUrls[0] || '/1001102628.jpg',
       is_active: true,
     };
-    setVariations([...variations, newVar]);
+    setVariations((prev) => [...prev, newVar]);
+    showToast('New variation added! Configure attributes below.', 'success');
   };
 
   const handleUpdateVariation = (idx, field, val) => {
@@ -131,8 +132,9 @@ export default function AdminProductFormPage() {
     setVariations(updated);
   };
 
-  const handleRemoveVariation = (idx) => {
-    setVariations(variations.filter((_, i) => i !== idx));
+  const handleRemoveVariation = (idx, varLabel) => {
+    setVariations((prev) => prev.filter((_, i) => i !== idx));
+    showToast(varLabel ? `Variation "${varLabel}" removed.` : `Variation #${idx + 1} removed.`, 'info');
   };
 
   const handleProductImageUpload = async (e) => {
@@ -829,7 +831,11 @@ export default function AdminProductFormPage() {
         onClose={() => setDeleteVariationTarget(null)}
         onConfirm={() => {
           if (deleteVariationTarget !== null) {
-            handleRemoveVariation(deleteVariationTarget.idx);
+            const varLabel =
+              deleteVariationTarget.v?.sku ||
+              Object.values(deleteVariationTarget.v?.attributes || {}).filter(Boolean).join(' / ') ||
+              `Variation #${deleteVariationTarget.idx + 1}`;
+            handleRemoveVariation(deleteVariationTarget.idx, varLabel);
             setDeleteVariationTarget(null);
           }
         }}

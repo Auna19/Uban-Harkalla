@@ -166,4 +166,40 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     await cancelBtn.click();
     await expect(modal).not.toBeVisible();
   });
+
+  test('TC-ADM-007: Admin Product Form variation addition and removal displays notification toasts', async ({ page }) => {
+    await page.goto('/admin/products/create');
+    await expect(page.locator('h1')).toContainText(/Create New Product/i, { timeout: 25000 });
+
+    // Scroll to Dynamic Variations Builder section
+    const variationsHeader = page.getByRole('heading', { name: /3\. Dynamic Variations Builder/i });
+    await variationsHeader.scrollIntoViewIfNeeded();
+    await expect(variationsHeader).toBeVisible();
+
+    // 1. Add Variation
+    const addVarBtn = page.getByRole('button', { name: /Add Variation|\+ Add First Variation/i }).first();
+    await addVarBtn.click();
+
+    // Verify addition toast appears
+    const addToast = page.locator('text=/New variation added!/i');
+    await expect(addToast).toBeVisible({ timeout: 10000 });
+
+    // 2. Click Remove button on the created variation
+    const removeBtn = page.getByRole('button', { name: /Remove/i }).first();
+    await expect(removeBtn).toBeVisible();
+    await removeBtn.click();
+
+    // Verify ConfirmationModal opens
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Remove Product Variation\?/i);
+
+    // Confirm Removal
+    const confirmRemoveBtn = modal.getByRole('button', { name: /Remove Variation/i });
+    await confirmRemoveBtn.click();
+
+    // 3. Verify Removal Notification Toast displays
+    const removeToast = page.locator('text=/Variation .* removed\./i');
+    await expect(removeToast).toBeVisible({ timeout: 10000 });
+  });
 });

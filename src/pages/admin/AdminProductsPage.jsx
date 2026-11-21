@@ -392,7 +392,7 @@ export default function AdminProductsPage() {
                             ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
                             : 'text-slate-600 hover:text-slate-400'
                             }`}
-                          title={prod.is_featured ? 'Click to unfeature' : 'Click to feature on homepage'}
+                          title="Toggle Featured"
                         >
                           <Star className={`w-4 h-4 transition-transform ${prod.is_featured ? 'fill-amber-400' : ''}`} />
                         </button>
