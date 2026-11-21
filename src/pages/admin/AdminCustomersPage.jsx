@@ -29,17 +29,28 @@ export default function AdminCustomersPage() {
   }, []);
 
   const handleToggle = async (customer) => {
+    const nextVal = customer.is_active === false;
+
+    // 1. Instant 0ms Optimistic UI update
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === customer.id ? { ...c, is_active: nextVal } : c))
+    );
+    showToast(
+      nextVal
+        ? `Activated customer account "${customer.full_name}".`
+        : `Suspended customer account "${customer.full_name}".`,
+      'info'
+    );
+
+    // 2. Background database persistence
     try {
       await toggleCustomerStatus(customer.id);
-      showToast(
-        customer.is_active !== false
-          ? `Suspended customer account "${customer.full_name}".`
-          : `Activated customer account "${customer.full_name}".`,
-        'info'
-      );
-      load();
     } catch (e) {
       console.error(e);
+      // Revert if error
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === customer.id ? { ...c, is_active: !nextVal } : c))
+      );
       showToast('Failed to update customer status.', 'error');
     }
   };

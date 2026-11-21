@@ -663,6 +663,46 @@ export async function deleteProducts(ids) {
   return updated;
 }
 
+export async function toggleProductFeatured(id, nextVal) {
+  const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+  const updated = current.map((p) =>
+    p.id === id || p.slug === id ? { ...p, is_featured: nextVal, updated_at: new Date().toISOString() } : p
+  );
+  saveStoredData(STORAGE_KEYS.PRODUCTS, updated);
+
+  if (isNeonConfigured && sql) {
+    try {
+      await executeWithTimeout(
+        sql`UPDATE products SET is_featured = ${nextVal}, updated_at = CURRENT_TIMESTAMP WHERE id::text = ${String(id)} OR slug = ${String(id)}`,
+        8000
+      );
+    } catch (e) {
+      console.warn('Neon toggle featured warning:', e);
+    }
+  }
+  return updated;
+}
+
+export async function toggleProductActive(id, nextVal) {
+  const current = getStoredData(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
+  const updated = current.map((p) =>
+    p.id === id || p.slug === id ? { ...p, is_active: nextVal, updated_at: new Date().toISOString() } : p
+  );
+  saveStoredData(STORAGE_KEYS.PRODUCTS, updated);
+
+  if (isNeonConfigured && sql) {
+    try {
+      await executeWithTimeout(
+        sql`UPDATE products SET is_active = ${nextVal}, updated_at = CURRENT_TIMESTAMP WHERE id::text = ${String(id)} OR slug = ${String(id)}`,
+        8000
+      );
+    } catch (e) {
+      console.warn('Neon toggle active warning:', e);
+    }
+  }
+  return updated;
+}
+
 // ------------------------------------------------------------------------------
 // DELIVERY LOCATIONS
 // ------------------------------------------------------------------------------

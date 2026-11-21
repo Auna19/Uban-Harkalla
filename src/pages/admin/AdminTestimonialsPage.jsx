@@ -19,11 +19,21 @@ export default function AdminTestimonialsPage() {
   }, []);
 
   const handleToggleApproval = async (item) => {
-    await saveTestimonial({
-      ...item,
-      is_approved: !item.is_approved,
-    });
-    load();
+    const nextVal = !item.is_approved;
+    setTestimonials((prev) =>
+      prev.map((t) => (t.id === item.id ? { ...t, is_approved: nextVal } : t))
+    );
+    try {
+      await saveTestimonial({
+        ...item,
+        is_approved: nextVal,
+      });
+    } catch (e) {
+      console.error(e);
+      setTestimonials((prev) =>
+        prev.map((t) => (t.id === item.id ? { ...t, is_approved: !nextVal } : t))
+      );
+    }
   };
 
   const handleConfirmDelete = async () => {

@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProducts, getCategories, deleteProduct, deleteProducts, saveProduct } from '../../services/dataService';
+import {
+  getProducts,
+  getCategories,
+  deleteProduct,
+  deleteProducts,
+  saveProduct,
+  toggleProductFeatured,
+  toggleProductActive,
+} from '../../services/dataService';
 import {
   Smartphone,
   Plus,
@@ -106,22 +114,52 @@ export default function AdminProductsPage() {
 
   const handleToggleFeatured = async (product) => {
     const nextVal = !product.is_featured;
-    await saveProduct({
-      ...product,
-      is_featured: nextVal,
-    });
-    showToast(nextVal ? `Marked "${product.name}" as Featured!` : `Removed "${product.name}" from Featured`, 'info');
-    fetchProducts();
+
+    // 1. Instant 0ms Optimistic Update in UI
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, is_featured: nextVal } : p))
+    );
+    showToast(
+      nextVal ? `Marked "${product.name}" as Featured!` : `Removed "${product.name}" from Featured`,
+      'info'
+    );
+
+    // 2. High-speed targeted background persistence (no full catalogue reload)
+    try {
+      await toggleProductFeatured(product.id, nextVal);
+    } catch (err) {
+      console.error('Failed to toggle featured status:', err);
+      // Revert state if background update fails
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, is_featured: !nextVal } : p))
+      );
+      showToast(`Failed to update "${product.name}". Reverted changes.`, 'error');
+    }
   };
 
   const handleToggleActive = async (product) => {
     const nextVal = !product.is_active;
-    await saveProduct({
-      ...product,
-      is_active: nextVal,
-    });
-    showToast(nextVal ? `Published "${product.name}" active on store!` : `Moved "${product.name}" to draft`, 'info');
-    fetchProducts();
+
+    // 1. Instant 0ms Optimistic Update in UI
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, is_active: nextVal } : p))
+    );
+    showToast(
+      nextVal ? `Published "${product.name}" active on store!` : `Moved "${product.name}" to draft`,
+      'info'
+    );
+
+    // 2. High-speed targeted background persistence (no full catalogue reload)
+    try {
+      await toggleProductActive(product.id, nextVal);
+    } catch (err) {
+      console.error('Failed to toggle active status:', err);
+      // Revert state if background update fails
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, is_active: !nextVal } : p))
+      );
+      showToast(`Failed to update status for "${product.name}". Reverted changes.`, 'error');
+    }
   };
 
   const filtered = products.filter((p) => {
@@ -351,23 +389,24 @@ export default function AdminProductsPage() {
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <button
                           onClick={() => handleToggleFeatured(prod)}
-                          className={`p-1.5 rounded-lg transition-colors ${prod.is_featured
+                          className={`p-1.5 rounded-lg transition-all active:scale-90 cursor-pointer ${prod.is_featured
                             ? 'text-amber-400 bg-amber-950/60 border border-amber-800'
                             : 'text-slate-600 hover:text-slate-400'
                             }`}
-                          title="Toggle Featured"
+                          title={prod.is_featured ? 'Toggle Featured: Click to unfeature' : 'Toggle Featured: Click to feature on homepage'}
                         >
-                          <Star className={`w-4 h-4 ${prod.is_featured ? 'fill-amber-400' : ''}`} />
+                          <Star className={`w-4 h-4 transition-transform ${prod.is_featured ? 'fill-amber-400' : ''}`} />
                         </button>
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <button
                           onClick={() => handleToggleActive(prod)}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${prod.is_active !== false
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                            : 'bg-slate-800 text-slate-400'
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${prod.is_active !== false
+                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900/60'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700/80 border border-slate-700'
                             }`}
+                          title={prod.is_active !== false ? 'Click to move to Draft' : 'Click to publish Active'}
                         >
                           {prod.is_active !== false ? 'Active' : 'Draft'}
                         </button>
