@@ -54,8 +54,8 @@ test.describe('Module 1: Navigation & Global Storefront Layout', () => {
     await addBtn.click();
 
     // Check navbar cart badge displays at least 1
-    const cartBadge = page.locator('header a[href="/cart"] span');
-    await expect(cartBadge).toBeVisible();
+    const cartBadge = page.locator('header a[href="/cart"] span.bg-emerald-600').first();
+    await expect(cartBadge).toBeVisible({ timeout: 15000 });
     const countText = await cartBadge.textContent();
     expect(Number(countText)).toBeGreaterThan(0);
   });

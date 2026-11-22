@@ -815,13 +815,17 @@ export async function createOrderAtomic(orderPayload) {
 
   // Validate items and stock
   for (const item of orderPayload.items) {
-    const prod = products.find((p) => p.id === item.product_id);
+    const prod = products.find(
+      (p) => p.id === item.product_id || p.name === item.product_name || (item.slug && p.slug === item.slug)
+    );
     if (!prod) {
       throw new Error(`Product "${item.product_name}" is no longer available.`);
     }
 
     if (item.variation_id && prod.variations) {
-      const varItem = prod.variations.find((v) => v.id === item.variation_id);
+      const varItem = prod.variations.find(
+        (v) => v.id === item.variation_id || (v.sku && item.sku && v.sku === item.sku)
+      );
       if (varItem) {
         if (varItem.stock_quantity < item.quantity) {
           throw new Error(
@@ -886,14 +890,16 @@ export async function createOrderAtomic(orderPayload) {
 
   // Atomic stock decrement
   const updatedProducts = products.map((prod) => {
-    const matchingItems = orderPayload.items.filter((i) => i.product_id === prod.id);
+    const matchingItems = orderPayload.items.filter(
+      (i) => i.product_id === prod.id || i.product_name === prod.name
+    );
     if (!matchingItems.length) return prod;
 
     let updatedProd = { ...prod };
     for (const mItem of matchingItems) {
       if (mItem.variation_id && updatedProd.variations) {
         updatedProd.variations = updatedProd.variations.map((v) => {
-          if (v.id === mItem.variation_id) {
+          if (v.id === mItem.variation_id || (v.sku && mItem.sku && v.sku === mItem.sku)) {
             return { ...v, stock_quantity: Math.max(0, v.stock_quantity - mItem.quantity) };
           }
           return v;

@@ -20,6 +20,12 @@
 | **BUG-007** | Admin Product & Image Sync | High | P1 (Urgent) | **FIXED & VERIFIED** | Neon UUID type violation, omitted SQL columns, and missing cross-browser SWR sync |
 | **BUG-008** | Product Discounted Promo Price | High | P1 (Urgent) | **FIXED & VERIFIED** | Variations defaulted to base price, ignoring product-level promo discount on landing page |
 | **BUG-009** | Number & Currency Formatting | Medium | P2 (High) | **FIXED & VERIFIED** | Postgres numeric strings failed `.toLocaleString()`; missing comma thousands separators |
+| **BUG-010** | Database & Infrastructure | Critical | P0 (Blocker) | **FIXED & VERIFIED** | Neon free quota exhausted (HTTP 402); migrated to fresh active project `odd-art-25160426` |
+| **BUG-011** | Customer Account Governance | High | P1 (Urgent) | **FIXED & VERIFIED** | Missing `is_active` column in Postgres `users` table; account suspension could not persist |
+| **BUG-012** | Checkout Payment Selector | Low | P3 (Medium) | **FIXED & VERIFIED** | Missing `value` attributes on payment method radio inputs affecting form accessibility |
+| **BUG-013** | Mobile Viewport Navigation | Medium | P2 (High) | **FIXED & VERIFIED** | Missing sticky bottom navigation bar violating PRD §4.1.1 for mobile devices |
+| **BUG-014** | Order Placement Data Bridge | High | P1 (Urgent) | **FIXED & VERIFIED** | `createOrderAtomic` matched exclusively by UUID, failing when items had string or slug IDs |
+| **BUG-015** | Checkout Delivery State Race | Medium | P2 (High) | **FIXED & VERIFIED** | `locations` initialized as empty array `[]` throwing false "delivery unautomated" before fetch |
 
 ---
 
@@ -234,14 +240,136 @@
 
 ---
 
+### BUG-010: Remote Neon PostgreSQL Quota Exhaustion (HTTP 402) & Stale Fallback Cluster
+- **Affected URL:** Global / Backend API
+- **Component File(s):** `.env`, `src/services/neonClient.js`, `neon/schema.sql`
+- **Severity:** Critical (Blocker)
+- **Priority:** P0
+- **Observed Behavior:**
+  - Database queries failed with: `NeonDbError: Server error (HTTP status 402): {"message":"Your account or project has exceeded the quota."}`.
+  - Hardcoded connection fallback in `neonClient.js` pointed to an expired test cluster.
+- **Root Cause Analysis:**
+  - The previous Neon project `little-band-17620142` reached its monthly compute quota.
+  - Fallback environment string in `neonClient.js` was hardcoded to the deprecated endpoint when running without Vite env variables.
+- **Resolution Implemented:**
+  - Provisioned a fresh Neon project `odd-art-25160426` (`uban-harkalla-v2`) in `aws-us-west-2`.
+  - Updated `.env` with pooled and unpooled URIs.
+  - Updated `neonClient.js` to prioritize `process.env.DATABASE_URL` and `import.meta.env.VITE_NEON_DATABASE_URL` dynamically.
+  - Ran full schema migration and database seeding (`scripts/migrate-neon.mjs` and `scripts/seed-admin-neon.mjs`).
+- **Verification Evidence:**
+  - Playwright suite executed 43 tests against active Neon PostgreSQL with zero connection or quota failures.
+
+---
+
+### BUG-011: Missing `is_active` Column in PostgreSQL `users` Table for Account Suspension
+- **Affected URL:** `/admin/customers`, `/login`
+- **Component File(s):** `neon/schema.sql`, `scripts/seed-admin-neon.mjs`, `src/context/AuthContext.jsx`
+- **Severity:** High
+- **Priority:** P1
+- **Observed Behavior:**
+  - In Admin Customers directory, toggling customer status or logging in as a suspended customer threw `column "is_active" of relation "users" does not exist`.
+- **Root Cause Analysis:**
+  - The `users` table schema omitted the boolean flag `is_active` required for customer account governance according to PRD Section 4.5.
+- **Resolution Implemented:**
+  - Added `is_active BOOLEAN NOT NULL DEFAULT true` to `neon/schema.sql`.
+  - Executed migration altering table `users` on active Neon database.
+  - Added seed test users: `abubakar@test.ng` (`is_active: true`), `chidi@test.ng` (`is_active: true`), and `suspended@test.ng` (`is_active: false`).
+  - Added auth guard blocking login when `user.is_active === false` with clear customer support message.
+- **Verification Evidence:**
+  - Playwright tests `TC-E2E-008` and `TC-E2E-009` passed. Admin can toggle user active state, and suspended accounts are rejected with appropriate error notice.
+
+---
+
+### BUG-012: Missing `value` Attributes on Checkout Payment Method Radio Inputs
+- **Affected URL:** `/checkout`
+- **Component File(s):** `src/pages/customer/CheckoutPage.jsx`
+- **Severity:** Low
+- **Priority:** P3
+- **Observed Behavior:**
+  - Screen readers and automated tests clicking payment options required brittle text matching because the radio `<input type="radio">` tags lacked standard HTML `value` attributes.
+- **Root Cause Analysis:**
+  - `<input type="radio" checked={paymentMethod === '...'} onChange={...} />` omitted explicit `value="paystack"`, `value="bank_transfer"`, and `value="pay_on_delivery"`.
+- **Resolution Implemented:**
+  - Explicitly added `value="paystack"`, `value="bank_transfer"`, and `value="pay_on_delivery"` to all payment option inputs.
+- **Verification Evidence:**
+  - Form controls adhere to W3C accessible form specifications. Automated tests select payment methods directly by radio value or accessible label.
+
+---
+
+### BUG-013: Missing Sticky Mobile Bottom Navigation Bar
+- **Affected URL:** Storefront on mobile viewport (< 768px)
+- **Component File(s):** `src/components/common/Navbar.jsx`
+- **Severity:** Medium
+- **Priority:** P2
+- **Observed Behavior:**
+  - On mobile devices and small viewports (e.g. 375px), navigating between Home, Shop, Cart, and Account required opening the top hamburger menu.
+  - Violated PRD §4.1.1 specification: *"Mobile Bottom Navigation: Sticky bottom bar on small viewports with quick links to Home, Shop, Cart (with badge), and Account."*
+- **Root Cause Analysis:**
+  - Only the top header navbar and mobile slide-out drawer had been built; the sticky bottom bar was absent.
+- **Resolution Implemented:**
+  - Implemented sticky bottom navigation bar in `src/components/common/Navbar.jsx`:
+    ```jsx
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2 flex items-center justify-around shadow-lg">
+      <NavLink to="/" ...>Home</NavLink>
+      <NavLink to="/shop" ...>Shop</NavLink>
+      <NavLink to="/cart" ...>Cart (with dynamic badge)</NavLink>
+      <NavLink to={user ? "/dashboard" : "/login"} ...>Account</NavLink>
+    </nav>
+    ```
+- **Verification Evidence:**
+  - Playwright test `TC-E2E-015` passed on 375px viewport. Bottom navigation bar is visible, sticky, and provides direct one-tap access with active route indicators and live cart badge.
+
+---
+
+### BUG-014: Checkout Order Placement Failure on Product ID Format Mismatch
+- **Affected URL:** `/checkout`
+- **Component File(s):** `src/services/dataService.js`
+- **Severity:** High
+- **Priority:** P1
+- **Observed Behavior:**
+  - During checkout submission, orders intermittently failed with: `Product "Apple iPhone 15 Pro Max" is no longer available.`
+- **Root Cause Analysis:**
+  - `createOrderAtomic` validated items using strictly `products.find((p) => p.id === item.product_id)`.
+  - When products were fetched from Neon PostgreSQL (UUID format `00000000-...`), but local storage state or fallback cart items retained string/slug formats (`prod-1`, `apple-iphone-15-pro-max`), the ID equality check failed.
+- **Resolution Implemented:**
+  - Enhanced item and stock matching in `dataService.js`:
+    ```javascript
+    const prod = products.find(
+      (p) => p.id === item.product_id || p.name === item.product_name || (item.slug && p.slug === item.slug)
+    );
+    ```
+  - Similarly enhanced variation matching by `v.id === item.variation_id || v.sku === item.sku`.
+- **Verification Evidence:**
+  - Playwright test `TC-E2E-004` passed. Checkout succeeds seamlessly across database-backed and client-backed product references.
+
+---
+
+### BUG-015: Delivery Location Availability False Negative on Initial Async Render
+- **Affected URL:** `/checkout`
+- **Component File(s):** `src/pages/customer/CheckoutPage.jsx`
+- **Severity:** Medium
+- **Priority:** P2
+- **Observed Behavior:**
+  - Fast order submissions or automated test runs for nationwide orders (e.g. Abuja) occasionally threw: `Delivery is not currently automated for "Abuja (FCT)". Please contact support via WhatsApp to arrange specialized delivery.`
+- **Root Cause Analysis:**
+  - In `CheckoutPage.jsx`, `locations` was initialized to empty array `[]` (`useState([])`).
+  - If a user or automated test submitted the form while `getDeliveryLocations()` was still resolving over network, `locations.find(...)` returned `undefined`, triggering the fallback unautomated error.
+- **Resolution Implemented:**
+  - Initialized `locations` with `INITIAL_DELIVERY_LOCATIONS` from `initialData.js` so default coverage states (Kano, Niger, Abuja, Katsina, Kaduna) are immediately present before network resolution.
+  - Added fallback `effectiveLocations = locations?.length > 0 ? locations : INITIAL_DELIVERY_LOCATIONS` in the submission validation block.
+- **Verification Evidence:**
+  - Playwright test `TC-E2E-002` passed on the first run with zero flakiness.
+
+---
+
 ## 3. Bug Classification Matrix by Severity
 
 | Severity Level | Count | Fixed | Verified |
 |---|---|---|---|
-| **Critical / Blocker** | 0 | 0 | 0 |
-| **High / Major** | 3 | 3 | 3 |
-| **Medium** | 4 | 4 | 4 |
+| **Critical / Blocker** | 1 | 1 | 1 |
+| **High / Major** | 6 | 6 | 6 |
+| **Medium** | 6 | 6 | 6 |
 | **Low / Minor** | 2 | 2 | 2 |
-| **Total Bugs** | **9** | **9** | **9** |
+| **Total Bugs** | **15** | **15** | **15** |
 
 **Bug Resolution Rate:** **100.0%**

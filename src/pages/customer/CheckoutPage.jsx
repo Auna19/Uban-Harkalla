@@ -7,6 +7,7 @@ import {
   getBusinessSettings,
   createOrderAtomic,
 } from '../../services/dataService';
+import { INITIAL_DELIVERY_LOCATIONS } from '../../services/initialData';
 import { formatPrice, formatNumber } from '../../utils/formatters';
 import {
   ShieldCheck,
@@ -25,7 +26,7 @@ export default function CheckoutPage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
-  const [locations, setLocations] = useState([]);
+  const [locations, setLocations] = useState(INITIAL_DELIVERY_LOCATIONS);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,7 +102,8 @@ export default function CheckoutPage() {
       if (!city.trim()) return setError('Please enter your delivery city / area.');
 
       // Validate delivery fee against backend configuration
-      const locMatch = locations.find((l) => l.state.toLowerCase() === selectedState.toLowerCase());
+      const effectiveLocations = locations && locations.length > 0 ? locations : INITIAL_DELIVERY_LOCATIONS;
+      const locMatch = effectiveLocations.find((l) => l.state.toLowerCase() === selectedState.toLowerCase());
       if (!locMatch) {
         return setError(
           `Delivery is not currently automated for "${selectedState}". Please contact support via WhatsApp to arrange specialized delivery.`
@@ -371,6 +373,7 @@ export default function CheckoutPage() {
                     <input
                       type="radio"
                       name="payment"
+                      value="paystack"
                       checked={paymentMethod === 'paystack'}
                       onChange={() => setPaymentMethod('paystack')}
                       className="mt-1 text-emerald-600 focus:ring-emerald-500"
@@ -401,6 +404,7 @@ export default function CheckoutPage() {
                     <input
                       type="radio"
                       name="payment"
+                      value="bank_transfer"
                       checked={paymentMethod === 'bank_transfer'}
                       onChange={() => setPaymentMethod('bank_transfer')}
                       className="mt-1 text-emerald-600 focus:ring-emerald-500"
@@ -448,6 +452,7 @@ export default function CheckoutPage() {
                       <input
                         type="radio"
                         name="payment"
+                        value="pay_on_delivery"
                         checked={paymentMethod === 'pay_on_delivery'}
                         onChange={() => setPaymentMethod('pay_on_delivery')}
                         className="mt-1 text-emerald-600 focus:ring-emerald-500"

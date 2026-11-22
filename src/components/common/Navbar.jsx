@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Menu, X, User, LogOut, ShieldCheck, Search, ChevronDown, Package } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, LogOut, ShieldCheck, Search, ChevronDown, Package, Home, Store } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 
@@ -285,6 +285,63 @@ export default function Navbar() {
           )}
         </div>
       )}
+      {/* Sticky Mobile Bottom Navigation Bar */}
+      <nav aria-label="Mobile Navigation" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-6 flex justify-around items-center sm:hidden shadow-lg">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+            }`
+          }
+        >
+          <Home className="w-5 h-5" />
+          <span>Home</span>
+        </NavLink>
+
+        <NavLink
+          to="/shop"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+            }`
+          }
+        >
+          <Store className="w-5 h-5" />
+          <span>Shop</span>
+        </NavLink>
+
+        <NavLink
+          to="/cart"
+          className={({ isActive }) =>
+            `relative flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+            }`
+          }
+        >
+          <div className="relative">
+            <ShoppingBag className="w-5 h-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-emerald-600 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                {itemCount}
+              </span>
+            )}
+          </div>
+          <span>Cart</span>
+        </NavLink>
+
+        <NavLink
+          to={user ? '/dashboard' : '/login'}
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+            }`
+          }
+        >
+          <User className="w-5 h-5" />
+          <span>{user ? 'Account' : 'Login'}</span>
+        </NavLink>
+      </nav>
     </header>
   );
 }

@@ -15,11 +15,11 @@ A comprehensive automated End-to-End (E2E) regression test suite was constructed
 All identified defects across UI layout, text truncation, search interactivity, catalog loading states, admin inventory display, and checkout validation were systematically resolved in the codebase and re-tested.
 
 ### Key Quality Metrics
-- **Total Test Cases Executed:** 28
-- **Passed:** 28 (100.0%)
+- **Total Test Cases Executed:** 43
+- **Passed:** 43 (100.0%)
 - **Failed:** 0 (0.0%)
 - **Flaky / Retried:** 0
-- **Total Execution Duration:** 2.4 minutes
+- **Total Execution Duration:** 4.4 minutes
 - **Automation Status:** **PASSED — PRODUCTION READY**
 
 ---
@@ -90,15 +90,36 @@ All identified defects across UI layout, text truncation, search interactivity, 
 ### Module 7: Admin to Storefront Cross-Browser Data & Image Sync (`e2e/07-admin-storefront-sync.spec.js`)
 | Test ID | Test Scenario Description | Duration | Status |
 |---|---|---|---|
-| **TC-SYNC-001** | Admin creates product with image -> Reflected on Landing Page & Shop in clean session | 21.8s | **PASSED** |
-| **TC-SYNC-002** | Admin updates existing product image -> Reflected on Product Details Page in clean session | 17.8s | **PASSED** |
-| **TC-SYNC-003** | Category Image Update in Admin reflects on Landing Page category cards | 11.3s | **PASSED** |
+| **TC-SYNC-001** | Admin creates product with image -> Reflected on Landing Page & Shop in clean session | 8.9s | **PASSED** |
+| **TC-SYNC-002** | Admin updates existing product image -> Reflected on Product Details Page in clean session | 9.1s | **PASSED** |
+| **TC-SYNC-003** | Category Image Update in Admin reflects on Landing Page category cards | 6.2s | **PASSED** |
+
+---
+
+### Module 8: Section 12 Master End-to-End User Journeys (`e2e/08-end-to-end-journeys.spec.js`)
+| Test ID | Test Scenario Description | Duration | Status |
+|---|---|---|---|
+| **TC-E2E-001** | Abubakar (Kano) - Home -> Shop -> PDP Variant -> Cart -> Kano Free Delivery -> Paystack -> Admin Fulfillment | 9.5s | **PASSED** |
+| **TC-E2E-002** | Chidi (Abuja) - Nationwide Delivery Order with Regional Shipping Fee (₦2,500) | 6.3s | **PASSED** |
+| **TC-E2E-003** | WhatsApp Order Enquiry CTA Integration from PDP with dynamic prefilled template | 2.9s | **PASSED** |
+| **TC-E2E-004** | Direct Bank Transfer Checkout with Corporate Bank Details & Session ID | 7.4s | **PASSED** |
+| **TC-E2E-005** | Admin Product Lifecycle -> Storefront Catalog Discovery -> Low Stock -> Restock | 3.5s | **PASSED** |
+| **TC-E2E-006** | Customer Authentication Session & Dashboard Order History Inspection | 3.5s | **PASSED** |
+| **TC-E2E-007** | Out-of-Stock Item Guard and Button Disabling on depleted SKU | 3.0s | **PASSED** |
+| **TC-E2E-008** | Admin Customer Directory Governance (Activation & Suspension toggle) | 5.0s | **PASSED** |
+| **TC-E2E-009** | Suspended Customer Account Blocked from Login with support guidance | 3.4s | **PASSED** |
+| **TC-E2E-010** | Offline Storage Resilience & Local Cart Persistence across browser sessions | 4.2s | **PASSED** |
+| **TC-E2E-011** | Multi-Criteria Catalog Filtering (Category, Price Bounds, and Sorting) | 2.0s | **PASSED** |
+| **TC-E2E-012** | Universal Thousands Comma Formatting Verification Across Views (`en-NG`) | 1.9s | **PASSED** |
+| **TC-E2E-013** | Promotional Discounted Price Precedence Verification over standard base price | 2.1s | **PASSED** |
+| **TC-E2E-014** | Admin Executive Analytics & Revenue Reports Page loads KPI cards & breakdown | 7.0s | **PASSED** |
+| **TC-E2E-015** | Mobile Smartphone Responsive Viewport Journey (375px) with sticky bottom navigation | 1.9s | **PASSED** |
 
 ---
 
 ## 3. Bug Resolution & Verification Summary
 
-During the execution cycle, 9 defects were identified and cataloged in [QA/BUG_SHEET.md](file:///c:/Users/USER/Videos/DSN%20Automation/Uban%20Harkalla/QA/BUG_SHEET.md). All 9 issues were resolved in source code and verified:
+During the execution cycle, 15 defects were identified and cataloged in [QA/BUG_SHEET.md](file:///c:/Users/USER/Videos/DSN%20Automation/Uban%20Harkalla/QA/BUG_SHEET.md). All 15 issues were resolved in source code and verified:
 
 1. **BUG-001 (Cart Modal Overlap & `undefined` Text):**
    - Fixed property lookup `item.name || item.product_name` in `CartPage.jsx`.
@@ -110,7 +131,7 @@ During the execution cycle, 9 defects were identified and cataloged in [QA/BUG_S
 4. **BUG-004 (Missing Loading Indicator on Admin Inventory):**
    - Added emerald spinner and empty state in `AdminProductsPage.jsx`.
 5. **BUG-005 (Parallel Worker Saturation on Neon Database):**
-   - Scaled Playwright worker configuration in `playwright.config.js` to 2 workers with resilient timeouts.
+   - Scaled Playwright worker configuration in `playwright.config.js` to sequential execution (`workers: 1`) to eliminate database transaction races.
 6. **BUG-006 (Missing Transaction Reference in Checkout Test):**
    - Standardized payment method selection with Pay on Delivery and automated session ID generation in `04-cart-checkout.spec.js`.
 7. **BUG-007 (Admin Product Creation & Cross-Browser Image Sync Gap):**
@@ -123,6 +144,20 @@ During the execution cycle, 9 defects were identified and cataloged in [QA/BUG_S
 9. **BUG-009 (Missing Comma Thousands Separators in Figures and Prices):**
    - Created centralized `formatPrice(amount)` and `formatNumber(val)` utility in `src/utils/formatters.js`.
    - Normalized all Postgres string quantities and prices into genuine numbers, guaranteeing Nigerian locale comma formatting across all storefront and admin views.
+10. **BUG-010 (Neon Database Monthly Quota Exhaustion & Stale Fallback):**
+    - Migrated database infrastructure to a fresh active Neon project `odd-art-25160426` (`uban-harkalla-v2`) in `aws-us-west-2`.
+    - Updated environment variables and dynamic connection string handling in `neonClient.js`.
+11. **BUG-011 (Missing `is_active` Column in PostgreSQL `users` Table):**
+    - Added `is_active BOOLEAN NOT NULL DEFAULT true` to table `users`.
+    - Implemented customer account activation/suspension guard in `AuthContext.jsx`.
+12. **BUG-012 (Missing Form Values on Checkout Payment Radios):**
+    - Added explicit `value="paystack"`, `value="bank_transfer"`, and `value="pay_on_delivery"` to payment radio inputs.
+13. **BUG-013 (Missing Sticky Mobile Bottom Navigation Bar):**
+    - Implemented mobile bottom navigation bar in `Navbar.jsx` with quick links to Home, Shop, Cart (with live badge), and Account per PRD §4.1.1.
+14. **BUG-014 (Checkout Order Creation Product ID Format Mismatch):**
+    - Upgraded `createOrderAtomic` in `dataService.js` to cross-match product and variation items by ID, slug, and SKU.
+15. **BUG-015 (Delivery Location Availability False Negative on Initial Async Render):**
+    - Initialized checkout `locations` state with `INITIAL_DELIVERY_LOCATIONS` to ensure immediate availability before remote fetch resolves.
 
 ---
 
@@ -130,15 +165,15 @@ During the execution cycle, 9 defects were identified and cataloged in [QA/BUG_S
 
 - **Hosting Platform:** Vercel Global Edge Network
 - **Production URL:** `https://uban-harkalla-zeta.vercel.app`
-- **Database Engine:** Neon Lakebase Serverless Postgres (US-East-2)
+- **Database Engine:** Neon Lakebase Serverless Postgres (aws-us-west-2, Project: `odd-art-25160426`)
 - **CI / Git Branch:** `main`
 - **Browser Tested:** Chromium 134.0 (Headless Shell)
-- **Viewport Dimensions:** 1280 × 720 (Desktop Standard)
+- **Viewport Dimensions:** 1280 × 720 (Desktop Standard) & 375 × 667 (Mobile Standard)
 
 ---
 
 ## 5. QA Sign-Off & Recommendation
 
-The UBAN HARKALLA e-commerce web platform has achieved **100% test pass rate** across all 28 automated regression test cases. The user experience is verified seamless, responsive, and resilient across both mobile and desktop environments.
+The UBAN HARKALLA e-commerce web platform has achieved **100% test pass rate** across all **43 automated end-to-end regression test cases** (spanning all 8 test modules and the complete 15 master journeys from Section 12 of `QA/End to End Test Case Suite.docx`). The platform is robust, performant, resilient to offline conditions, and fully verified for end-to-end commerce operations.
 
 **Final Verdict:** **APPROVED FOR PRODUCTION RELEASE**

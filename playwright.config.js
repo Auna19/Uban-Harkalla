@@ -9,13 +9,13 @@ export default defineConfig({
   expect: {
     timeout: 10000,
   },
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 1,
-  workers: 2,
+  workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || (process.env.USE_LOCAL ? 'http://localhost:3000' : 'https://uban-harkalla-zeta.vercel.app'),
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -30,10 +30,10 @@ export default defineConfig({
       use: { ...devices['Pixel 7'] },
     },
   ],
-  webServer: process.env.USE_LOCAL ? {
+  webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 120000,
-  } : undefined,
+  },
 });
