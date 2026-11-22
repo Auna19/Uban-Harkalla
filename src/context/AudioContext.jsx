@@ -4,23 +4,33 @@ const AudioContext = createContext(null);
 
 export function AudioProvider({ children }) {
   const audioRef = useRef(null);
+  
+  // Eagerly initialize shared Audio instance immediately so it is available
+  // synchronously to all child useEffect hooks on initial render
+  if (!audioRef.current && typeof window !== 'undefined') {
+    const audio = new Audio('/UBAN HARKALLA MP3.mp3');
+    audio.loop = false; // Strictly non-looping as required
+    audio.volume = 0.8;
+    audio.preload = 'auto'; // Preload for instant, zero-latency playback
+    audio.setAttribute('playsinline', 'true');
+    audio.setAttribute('webkit-playsinline', 'true');
+    audioRef.current = audio;
+  }
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(0.8);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
-  const [userInteracted, setUserInteracted] = useState(false);
   
-  // Track playback events in current browser session
+  // Track playback state in current browser session
   const landingPlayedRef = useRef(false);
+  const hasStartedRef = useRef(false);
   const lastAuthEventRef = useRef(null);
 
-  // Initialize shared audio element once
+  // Bind audio element lifecycle events
   useEffect(() => {
-    const audio = new Audio('/UBAN HARKALLA MP3.mp3');
-    audio.loop = false; // Strictly non-looping as required
-    audio.volume = volume;
-    audio.preload = 'auto'; // Preload for instant, zero-latency mobile playback
-    audioRef.current = audio;
+    const audio = audioRef.current;
+    if (!audio) return;
 
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
@@ -48,73 +58,93 @@ export function AudioProvider({ children }) {
   }, []);
 
   // Safe Play wrapper that handles browser autoplay policies
-  const safePlay = useCallback(async () => {
-    if (!audioRef.current) return;
+  const safePlay = useCallback(() => {
+    if (!audioRef.current) return Promise.resolve();
     try {
-      // Rewind to start if ended
       if (audioRef.current.ended) {
         audioRef.current.currentTime = 0;
       }
       const promise = audioRef.current.play();
       if (promise !== undefined) {
-        await promise;
-        setAutoplayBlocked(false);
-        setIsPlaying(true);
+        return promise
+          .then(() => {
+            hasStartedRef.current = true;
+            landingPlayedRef.current = true;
+            setAutoplayBlocked(false);
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+              console.info('Autoplay waiting for first touch gesture on mobile.');
+            } else {
+              console.warn('Playback notice:', err.message);
+            }
+            setIsPlaying(false);
+          });
       }
+      return Promise.resolve();
     } catch (err) {
-      if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
-        console.info('Autoplay waiting for first touch gesture on mobile.');
-      } else {
-        console.warn('Playback notice:', err.message);
-      }
       setIsPlaying(false);
+      return Promise.resolve();
     }
   }, []);
 
-  // One-time interaction listener for seamless mobile playback on first touch/interaction
+  // One-time interaction listener for seamless mobile playback on first touch/interaction anywhere
   useEffect(() => {
-    let triggered = false;
+    // If audio already started or is currently playing, clean up
+    if (hasStartedRef.current || isPlaying) return;
 
-    const handleFirstGesture = async () => {
-      if (triggered) return;
-      if (!audioRef.current) return;
-
-      // If already playing or landing audio already played, clean up listeners
-      if (isPlaying || landingPlayedRef.current) {
+    const handleFirstGesture = () => {
+      if (hasStartedRef.current) {
         removeGestureListeners();
         return;
       }
 
+      const audio = audioRef.current;
+      if (!audio) return;
+
       try {
-        if (audioRef.current.ended) {
-          audioRef.current.currentTime = 0;
+        if (audio.ended) {
+          audio.currentTime = 0;
         }
-        const promise = audioRef.current.play();
+        // Direct, synchronous play call inside the user gesture event frame
+        const promise = audio.play();
         if (promise !== undefined) {
-          await promise;
-          triggered = true;
-          landingPlayedRef.current = true;
-          setAutoplayBlocked(false);
-          setIsPlaying(true);
-          removeGestureListeners();
+          promise
+            .then(() => {
+              hasStartedRef.current = true;
+              landingPlayedRef.current = true;
+              setAutoplayBlocked(false);
+              setIsPlaying(true);
+              removeGestureListeners();
+            })
+            .catch(() => {
+              // Still restricted by browser on this specific gesture, keep listeners attached for subsequent touch
+            });
         }
       } catch (err) {
-        // If still restricted, keep listeners attached for subsequent touch
+        // Keep listeners attached
       }
     };
 
     const removeGestureListeners = () => {
-      const events = ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'];
+      const events = ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'mousedown', 'click', 'scroll', 'keydown'];
       events.forEach((evt) => {
         window.removeEventListener(evt, handleFirstGesture, { capture: true });
         document.removeEventListener(evt, handleFirstGesture, { capture: true });
+        if (document.body) {
+          document.body.removeEventListener(evt, handleFirstGesture, { capture: true });
+        }
       });
     };
 
-    const events = ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'];
+    const events = ['touchstart', 'touchend', 'pointerdown', 'pointerup', 'mousedown', 'click', 'scroll', 'keydown'];
     events.forEach((evt) => {
       window.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
       document.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
+      if (document.body) {
+        document.body.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
+      }
     });
 
     return () => {
@@ -152,15 +182,39 @@ export function AudioProvider({ children }) {
   }, []);
 
   /**
-   * Called only when visitor lands on the landing page (Home).
-   * Attempts playback once per full page load. Ordinary in-app navigation
-   * does not replay it because landingPlayedRef stays true during the session.
+   * Called when visitor lands on the landing page (Home).
+   * Attempts instant playback. If the browser restricts unmuted autoplay (standard on mobile),
+   * it fails gracefully WITHOUT marking landingPlayedRef=true, allowing the user's very first
+   * touch, scroll, or tap anywhere on the screen to trigger smooth playback.
    */
   const triggerLandingPlayback = useCallback(() => {
-    if (landingPlayedRef.current) return; // Already played for this load
-    landingPlayedRef.current = true;
-    safePlay();
-  }, [safePlay]);
+    if (landingPlayedRef.current || hasStartedRef.current) return; // Already played for this load
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    try {
+      if (audio.ended) {
+        audio.currentTime = 0;
+      }
+      const promise = audio.play();
+      if (promise !== undefined) {
+        promise
+          .then(() => {
+            landingPlayedRef.current = true;
+            hasStartedRef.current = true;
+            setAutoplayBlocked(false);
+            setIsPlaying(true);
+          })
+          .catch(() => {
+            // Mobile browser blocked unmuted autoplay.
+            // Do NOT mark landingPlayedRef.current = true so first user touch anywhere will play!
+            console.info('Autoplay restricted by mobile browser policy; awaiting first touch interaction.');
+          });
+      }
+    } catch (err) {
+      // Ignored
+    }
+  }, []);
 
   /**
    * Called only when a visitor successfully registers or logs in.
@@ -175,9 +229,10 @@ export function AudioProvider({ children }) {
     safePlay();
   }, [safePlay]);
 
-  // Handle first manual user interaction to unlock blocked autoplay if pending
+  // Handle manual user play from the UI controller
   const manualPlayAudio = useCallback(() => {
-    setUserInteracted(true);
+    hasStartedRef.current = true;
+    landingPlayedRef.current = true;
     setAutoplayBlocked(false);
     safePlay();
   }, [safePlay]);
