@@ -324,19 +324,19 @@ export default function HeroSection({ content }) {
                   </div>
                 </TiltCard>
 
-                {/* Floating Top Badge */}
-                <div className="absolute -top-5 -left-5 sm:-left-7 bg-slate-950/95 border border-slate-700/90 rounded-2xl p-3 shadow-2xl backdrop-blur-md flex items-center gap-3 animate-float">
+                {/* Floating Top Badge with Brand Logo */}
+                <div className="absolute -top-3 left-2 sm:-top-5 sm:-left-7 bg-slate-950/95 border border-slate-700/90 rounded-2xl p-2.5 sm:p-3 shadow-2xl backdrop-blur-md flex items-center gap-2.5 sm:gap-3 animate-float z-20">
                   <img
                     src="/Logo.jpg"
                     alt="UBAN HARKALLA Logo"
-                    className="w-10 h-10 rounded-xl object-contain border border-slate-700"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-slate-700 shrink-0"
                   />
                   <div>
-                    <div className="flex items-center gap-1 text-emerald-400 font-extrabold text-xs">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-1 text-emerald-400 font-extrabold text-[11px] sm:text-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                       Verified Genuine
                     </div>
-                    <span className="text-[11px] text-slate-400">Official Direct Importer</span>
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 block whitespace-nowrap">Official Direct Importer</span>
                   </div>
                 </div>
 

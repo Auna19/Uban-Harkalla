@@ -37,7 +37,8 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+    <>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
       {/* Top Banner Notice */}
       <div className="bg-slate-900 text-white text-[12px] py-1.5 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -54,21 +55,21 @@ export default function Navbar() {
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           
           {/* Brand Logo & Name */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
             <img
               src="/Logo.jpg"
               alt="UBAN HARKALLA Logo"
-              className="w-12 h-12 object-contain rounded-xl border border-slate-200 shadow-sm group-hover:scale-105 transition-transform"
+              className="w-9 h-9 sm:w-12 sm:h-12 object-contain rounded-xl border border-slate-200 shadow-2xs group-hover:scale-105 transition-transform shrink-0"
             />
-            <div className="flex flex-col">
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-950 font-sans">
+            <div className="flex flex-col min-w-0">
+              <span className="font-extrabold text-base sm:text-xl tracking-tight text-slate-950 font-sans whitespace-nowrap">
                 UBAN <span className="text-emerald-600">HARKALLA</span>
               </span>
-              <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase -mt-1">
+              <span className="text-[9px] sm:text-[10px] font-semibold tracking-wider sm:tracking-widest text-slate-500 uppercase -mt-0.5 sm:-mt-1 whitespace-nowrap hidden xs:block">
                 Phones • Gadgets • Accessories
               </span>
             </div>
@@ -112,17 +113,17 @@ export default function Navbar() {
           </nav>
 
           {/* Action Buttons & Profile & Cart */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             
             {/* Shopping Cart Button with Live Counter Badge */}
             <Link
               to="/cart"
-              className="relative p-2.5 rounded-full hover:bg-slate-100 text-slate-700 transition-colors flex items-center justify-center group"
+              className="relative p-2 sm:p-2.5 rounded-full hover:bg-slate-100 text-slate-700 transition-colors flex items-center justify-center group"
               title="Shopping Cart"
             >
               <ShoppingBag className="w-5 h-5 text-slate-700 group-hover:text-emerald-600 transition-colors" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-emerald-600 text-white font-bold text-[11px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-scale-in">
+                <span className="absolute -top-1 -right-1 bg-emerald-600 text-white font-bold text-[10px] sm:text-[11px] w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-white animate-scale-in">
                   {itemCount}
                 </span>
               )}
@@ -307,77 +308,79 @@ export default function Navbar() {
           )}
         </div>
       )}
-      {/* Sticky Mobile Bottom Navigation Bar */}
-      <nav aria-label="Mobile Navigation" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-6 flex justify-around items-center sm:hidden shadow-lg">
-        <NavLink
-          to="/"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
-            }`
-          }
-        >
-          <Home className="w-5 h-5" />
-          <span>Home</span>
-        </NavLink>
-
-        <NavLink
-          to="/shop"
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
-            }`
-          }
-        >
-          <Store className="w-5 h-5" />
-          <span>Shop</span>
-        </NavLink>
-
-        <NavLink
-          to="/cart"
-          className={({ isActive }) =>
-            `relative flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
-            }`
-          }
-        >
-          <div className="relative">
-            <ShoppingBag className="w-5 h-5" />
-            {itemCount > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-emerald-600 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-white">
-                {itemCount}
-              </span>
-            )}
-          </div>
-          <span>Cart</span>
-        </NavLink>
-
-        <NavLink
-          to={user ? '/dashboard' : '/login'}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
-            }`
-          }
-        >
-          <User className="w-5 h-5" />
-          <span>{user ? 'Account' : 'Login'}</span>
-        </NavLink>
-      </nav>
-
-      {/* Logout Confirmation Prompt Modal for Customer / Navbar */}
-      <ConfirmationModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        onConfirm={handleConfirmLogout}
-        icon={LogOut}
-        title="Are you sure you want to logout?"
-        message="Are you sure you want to log out of your account? You will need to sign back in with your email and password to access your dashboard and order tracking."
-        confirmText="Yes, Log Out"
-        cancelText="Cancel"
-        confirmVariant="danger"
-        itemName={profile?.email || user?.email}
-      />
     </header>
+
+    {/* Sticky Mobile Bottom Navigation Bar */}
+    <nav aria-label="Mobile Navigation" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-6 flex justify-around items-center sm:hidden shadow-lg">
+      <NavLink
+        to="/"
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+          }`
+        }
+      >
+        <Home className="w-5 h-5" />
+        <span>Home</span>
+      </NavLink>
+
+      <NavLink
+        to="/shop"
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+          }`
+        }
+      >
+        <Store className="w-5 h-5" />
+        <span>Shop</span>
+      </NavLink>
+
+      <NavLink
+        to="/cart"
+        className={({ isActive }) =>
+          `relative flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+          }`
+        }
+      >
+        <div className="relative">
+          <ShoppingBag className="w-5 h-5" />
+          {itemCount > 0 && (
+            <span className="absolute -top-1.5 -right-2 bg-emerald-600 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-white">
+              {itemCount}
+            </span>
+          )}
+        </div>
+        <span>Cart</span>
+      </NavLink>
+
+      <NavLink
+        to={user ? '/dashboard' : '/login'}
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 text-[11px] font-semibold transition-colors ${
+            isActive ? 'text-emerald-600' : 'text-slate-500 hover:text-slate-900'
+          }`
+        }
+      >
+        <User className="w-5 h-5" />
+        <span>{user ? 'Account' : 'Login'}</span>
+      </NavLink>
+    </nav>
+
+    {/* Logout Confirmation Prompt Modal for Customer / Navbar */}
+    <ConfirmationModal
+      isOpen={showLogoutModal}
+      onClose={() => setShowLogoutModal(false)}
+      onConfirm={handleConfirmLogout}
+      icon={LogOut}
+      title="Are you sure you want to logout?"
+      message="Are you sure you want to log out of your account? You will need to sign back in with your email and password to access your dashboard and order tracking."
+      confirmText="Yes, Log Out"
+      cancelText="Cancel"
+      confirmVariant="danger"
+      itemName={profile?.email || user?.email}
+    />
+  </>
   );
 }

@@ -147,9 +147,16 @@ export default function AdminLayout() {
             <button
               onClick={() => setMobileSidebarOpen(true)}
               className="lg:hidden p-2 text-slate-400 hover:text-white rounded-xl"
+              aria-label="Open mobile navigation menu"
             >
               <Menu className="w-6 h-6" />
             </button>
+            <div className="flex items-center gap-2 lg:hidden">
+              <img src="/Logo.jpg" alt="UBAN HARKALLA" className="w-8 h-8 rounded-lg object-contain border border-slate-800 shrink-0" />
+              <span className="font-extrabold text-xs tracking-tight text-white">
+                UBAN <span className="text-emerald-400">HARKALLA</span>
+              </span>
+            </div>
             <span className="text-sm font-bold text-slate-300 hidden sm:inline">
               Store Management Console
             </span>

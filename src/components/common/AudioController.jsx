@@ -57,7 +57,7 @@ export default function AudioController() {
       )}
 
       {/* Floating Unobtrusive Brand Audio Control Bar */}
-      <div className="fixed bottom-4 right-4 sm:right-6 z-40">
+      <div className="fixed bottom-18 sm:bottom-6 right-4 sm:right-6 z-40">
         <div className="flex items-center bg-slate-900/90 backdrop-blur-md text-white rounded-full shadow-lg border border-slate-800/80 px-3 py-2 transition-all">
           <button
             onClick={() => (isPlaying ? pause() : play())}
