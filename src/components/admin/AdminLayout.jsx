@@ -23,30 +23,36 @@ import {
 } from 'lucide-react';
 
 export default function AdminLayout() {
-  const { profile, user, logout } = useAuth();
+  const { profile, user, logout, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  const navItems = [
+  // Dynamic Navigation Items with Strict Role-Based Visibility (RBAC)
+  const allNavItems = [
     { label: 'Overview', path: '/admin/dashboard', icon: LayoutDashboard, end: true },
     { label: 'Products & Variations', path: '/admin/products', icon: Smartphone },
     { label: 'Categories', path: '/admin/categories', icon: Layers },
     { label: 'Brands', path: '/admin/brands', icon: Shield },
     { label: 'Customer Orders', path: '/admin/orders', icon: Package },
-    { label: 'Customers', path: '/admin/customers', icon: Users },
-    { label: 'Delivery Locations', path: '/admin/delivery', icon: Truck },
-    { label: 'Payments & Banks', path: '/admin/payments', icon: CreditCard },
-    { label: 'Website Content', path: '/admin/content', icon: FileText },
+    { label: 'Customers', path: '/admin/customers', icon: Users, superAdminOnly: true },
+    { label: 'Delivery Locations', path: '/admin/delivery', icon: Truck, superAdminOnly: true },
+    { label: 'Payments & Banks', path: '/admin/payments', icon: CreditCard, superAdminOnly: true },
+    { label: 'Website Content', path: '/admin/content', icon: FileText, superAdminOnly: true },
     { label: 'Testimonials', path: '/admin/testimonials', icon: Star },
-    { label: 'Reports & Analytics', path: '/admin/reports', icon: BarChart3 },
-    { label: 'Admin Staff & Roles', path: '/admin/users', icon: Users },
-    { label: 'General Settings', path: '/admin/settings', icon: Settings },
+    { label: 'Reports & Analytics', path: '/admin/reports', icon: BarChart3, superAdminOnly: true },
+    { label: 'Admin Staff & Roles', path: '/admin/users', icon: Users, superAdminOnly: true },
+    { label: 'General Settings', path: '/admin/settings', icon: Settings, superAdminOnly: true },
   ];
+
+  // Store Inventory Manager only sees inventory, catalog, and order fulfillment modules
+  const navItems = allNavItems.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
   const handleLogout = () => {
     logout();
     navigate('/admin/login');
   };
+
+  const roleDisplayName = isSuperAdmin ? 'Super Administrator' : 'Store Inventory Manager';
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex">
@@ -97,14 +103,19 @@ export default function AdminLayout() {
 
         {/* Footer Admin User Info */}
         <div className="p-4 border-t border-slate-800 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="truncate">
-              <p className="text-xs font-bold text-white truncate">{profile?.full_name || 'Super Admin'}</p>
-              <p className="text-[10px] text-emerald-400 font-semibold uppercase">{profile?.role || 'Super Admin'}</p>
+              <p className="text-xs font-bold text-white truncate">{profile?.full_name || roleDisplayName}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className={`inline-block w-1.5 h-1.5 rounded-full ${isSuperAdmin ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider truncate">
+                  {roleDisplayName}
+                </p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-900"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-900 cursor-pointer shrink-0"
               title="Log Out"
             >
               <LogOut className="w-4 h-4" />
@@ -149,7 +160,14 @@ export default function AdminLayout() {
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
+              <span className={`hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                isSuperAdmin
+                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                  : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+              }`}>
+                {roleDisplayName}
+              </span>
               <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
                 {(profile?.full_name || 'A')[0]}
               </div>

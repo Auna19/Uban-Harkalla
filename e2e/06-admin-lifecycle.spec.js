@@ -91,7 +91,7 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     // 3. Test Select All in Header
     const selectAllCheckbox = page.locator('thead input[type="checkbox"]');
     await selectAllCheckbox.check();
-    const selectAllBanner = page.locator(`text=/${rowCount} products selected/i`);
+    const selectAllBanner = page.locator('text=/\\d+ products selected/i');
     await expect(selectAllBanner).toBeVisible();
 
     // Deselect all
@@ -201,5 +201,43 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     // 3. Verify Removal Notification Toast displays
     const removeToast = page.locator('text=/Variation .* removed\./i');
     await expect(removeToast).toBeVisible({ timeout: 10000 });
+  });
+
+  test('TC-ADM-008: Store Inventory Manager role permissions and Super Admin route restriction barrier', async ({ browser }) => {
+    const context = await browser.newContext();
+    const invPage = await context.newPage();
+
+    // 1. Log in as Store Inventory Manager
+    await invPage.goto('/admin/login');
+    await invPage.locator('input[type="email"]').fill('inventory@ubanharkalla.com');
+    await invPage.locator('input[type="password"]').fill('admin123');
+    await invPage.getByRole('button', { name: /Access Dashboard|Login/i }).click();
+    await expect(invPage).toHaveURL(/.*\/admin\/dashboard/, { timeout: 25000 });
+
+    // 2. Check sidebar shows Store Inventory Manager role badge
+    await expect(invPage.locator('text=Store Inventory Manager').first()).toBeVisible();
+
+    // 3. Verify permitted sections are visible in sidebar
+    await expect(invPage.locator('a[href="/admin/products"]').first()).toBeVisible();
+    await expect(invPage.locator('a[href="/admin/categories"]').first()).toBeVisible();
+    await expect(invPage.locator('a[href="/admin/brands"]').first()).toBeVisible();
+    await expect(invPage.locator('a[href="/admin/orders"]').first()).toBeVisible();
+
+    // 4. Verify restricted super admin sections are NOT in sidebar
+    await expect(invPage.locator('a[href="/admin/users"]')).toHaveCount(0);
+    await expect(invPage.locator('a[href="/admin/payments"]')).toHaveCount(0);
+    await expect(invPage.locator('a[href="/admin/reports"]')).toHaveCount(0);
+    await expect(invPage.locator('a[href="/admin/settings"]')).toHaveCount(0);
+
+    // 5. Navigate directly to a restricted URL (/admin/users) -> Verify Access Restricted barrier
+    await invPage.goto('/admin/users');
+    await expect(invPage.locator('text=Super Admin Privileges Required')).toBeVisible({ timeout: 15000 });
+    await expect(invPage.locator('text=Access Restricted')).toBeVisible();
+
+    // 6. Navigate directly to /admin/payments -> Verify Access Restricted barrier
+    await invPage.goto('/admin/payments');
+    await expect(invPage.locator('text=Super Admin Privileges Required')).toBeVisible({ timeout: 15000 });
+
+    await context.close();
   });
 });

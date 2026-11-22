@@ -137,14 +137,63 @@ export default function App() {
                   <Route path="brands" element={<AdminBrandsPage />} />
                   <Route path="orders" element={<AdminOrdersPage />} />
                   <Route path="orders/:id" element={<AdminOrderDetailPage />} />
-                  <Route path="customers" element={<AdminCustomersPage />} />
-                  <Route path="delivery" element={<AdminDeliveryPage />} />
-                  <Route path="payments" element={<AdminPaymentsPage />} />
-                  <Route path="content" element={<AdminContentPage />} />
+                  <Route
+                    path="customers"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminCustomersPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="delivery"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminDeliveryPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="payments"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminPaymentsPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="content"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminContentPage />
+                      </AdminRoute>
+                    }
+                  />
                   <Route path="testimonials" element={<AdminTestimonialsPage />} />
-                  <Route path="reports" element={<AdminReportsPage />} />
-                  <Route path="users" element={<AdminUsersPage />} />
-                  <Route path="settings" element={<AdminSettingsPage />} />
+                  <Route
+                    path="reports"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminReportsPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="users"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminUsersPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="settings"
+                    element={
+                      <AdminRoute requireSuperAdmin>
+                        <AdminSettingsPage />
+                      </AdminRoute>
+                    }
+                  />
                 </Route>
               </Routes>
             </AppLayout>

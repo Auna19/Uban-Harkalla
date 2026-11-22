@@ -15,8 +15,8 @@ A comprehensive automated End-to-End (E2E) regression test suite was constructed
 All identified defects across UI layout, text truncation, search interactivity, catalog loading states, admin inventory display, and checkout validation were systematically resolved in the codebase and re-tested.
 
 ### Key Quality Metrics
-- **Total Test Cases Executed:** 43
-- **Passed:** 43 (100.0%)
+- **Total Test Cases Executed:** 44
+- **Passed:** 44 (100.0%)
 - **Failed:** 0 (0.0%)
 - **Flaky / Retried:** 0
 - **Total Execution Duration:** 4.4 minutes
@@ -84,6 +84,7 @@ All identified defects across UI layout, text truncation, search interactivity, 
 | **TC-ADM-005** | Admin Products Page supports multiple selection checkboxes and bulk action controls | 5.7s | **PASSED** |
 | **TC-ADM-006** | Admin Customer Directory supports multiple selection checkboxes and bulk action controls | 5.5s | **PASSED** |
 | **TC-ADM-007** | Admin Product Form variation addition and removal displays notification toasts | 5.3s | **PASSED** |
+| **TC-ADM-008** | Store Inventory Manager role permissions and Super Admin route restriction barrier | 8.3s | **PASSED** |
 
 ---
 
@@ -158,6 +159,9 @@ During the execution cycle, 15 defects were identified and cataloged in [QA/BUG_
     - Upgraded `createOrderAtomic` in `dataService.js` to cross-match product and variation items by ID, slug, and SKU.
 15. **BUG-015 (Delivery Location Availability False Negative on Initial Async Render):**
     - Initialized checkout `locations` state with `INITIAL_DELIVERY_LOCATIONS` to ensure immediate availability before remote fetch resolves.
+16. **BUG-016 (Store Inventory Manager Overprivileged Access & Lack of RBAC):**
+    - Filtered `AdminLayout` navigation items to hide super-admin-only modules (Staff & Roles, Payments & Banks, Reports, Settings, Content, Delivery, Customers) from standard admin accounts.
+    - Added `requireSuperAdmin` barrier guard to `AdminRoute.jsx` that blocks unauthorized URL access with a styled permission-denied interface and navigation fallback.
 
 ---
 

@@ -26,6 +26,7 @@
 | **BUG-013** | Mobile Viewport Navigation | Medium | P2 (High) | **FIXED & VERIFIED** | Missing sticky bottom navigation bar violating PRD §4.1.1 for mobile devices |
 | **BUG-014** | Order Placement Data Bridge | High | P1 (Urgent) | **FIXED & VERIFIED** | `createOrderAtomic` matched exclusively by UUID, failing when items had string or slug IDs |
 | **BUG-015** | Checkout Delivery State Race | Medium | P2 (High) | **FIXED & VERIFIED** | `locations` initialized as empty array `[]` throwing false "delivery unautomated" before fetch |
+| **BUG-016** | Role-Based Access Control (RBAC) | High | P1 (Urgent) | **FIXED & VERIFIED** | Store Inventory Manager had unrestricted Super Admin access; added RBAC sidebar filter and route guards |
 
 ---
 
@@ -362,14 +363,39 @@
 
 ---
 
+### BUG-016: Store Inventory Manager Role Had Full Unrestricted Super Admin Access
+- **Affected URL:** `/admin/*` (`/admin/users`, `/admin/payments`, `/admin/reports`, `/admin/settings`, `/admin/content`, etc.)
+- **Component File(s):**
+  - `src/components/admin/AdminLayout.jsx`
+  - `src/components/admin/AdminRoute.jsx`
+  - `src/App.jsx`
+- **Severity:** High
+- **Priority:** P1
+- **Observed Behavior:**
+  - When logged in as Store Inventory Manager (`inventory@ubanharkalla.com` with role `admin`), all 13 sidebar links and administration modules were visible and accessible, including Staff & Roles management, corporate Bank & Paystack credentials, Financial Reports, and System Settings.
+- **Root Cause Analysis:**
+  - `AdminLayout.jsx` rendered all 13 navigation links indiscriminately for any user with `role === 'admin'` or `role === 'super_admin'`.
+  - Sub-routes in `App.jsx` did not enforce granular Role-Based Access Control (RBAC), allowing any authenticated staff user to modify staff accounts, financial accounts, and global settings.
+- **Resolution Implemented:**
+  1. Updated `AdminLayout.jsx` with `superAdminOnly: true` flags on restricted modules:
+     - Only Super Admins (`role: 'super_admin'`) see: Staff & Roles (`/admin/users`), Payments & Banks (`/admin/payments`), Financial Reports (`/admin/reports`), General Settings (`/admin/settings`), Website Content (`/admin/content`), Delivery Locations (`/admin/delivery`), and Customers Directory (`/admin/customers`).
+     - Store Inventory Managers (`role: 'admin'`) see: Overview, Products & Variations, Categories, Brands, Customer Orders, and Testimonials.
+  2. Updated `AdminRoute.jsx` with a `requireSuperAdmin` prop. If an inventory manager navigates directly to a Super Admin route, a clean branded "Access Restricted — Super Admin Privileges Required" barrier is displayed with a return CTA.
+  3. Wrapped all sensitive sub-routes in `App.jsx` with `<AdminRoute requireSuperAdmin>`.
+  4. Displayed distinct role badges in the header and sidebar ("Super Administrator" vs "Store Inventory Manager").
+- **Verification Evidence:**
+  - Playwright test `TC-ADM-008` in `e2e/06-admin-lifecycle.spec.js` passed. Verified that Store Inventory Manager only sees permitted modules, restricted links are omitted, and direct URL navigation to `/admin/users` and `/admin/payments` triggers the Access Restricted barrier.
+
+---
+
 ## 3. Bug Classification Matrix by Severity
 
 | Severity Level | Count | Fixed | Verified |
 |---|---|---|---|
 | **Critical / Blocker** | 1 | 1 | 1 |
-| **High / Major** | 6 | 6 | 6 |
+| **High / Major** | 7 | 7 | 7 |
 | **Medium** | 6 | 6 | 6 |
 | **Low / Minor** | 2 | 2 | 2 |
-| **Total Bugs** | **15** | **15** | **15** |
+| **Total Bugs** | **16** | **16** | **16** |
 
 **Bug Resolution Rate:** **100.0%**
