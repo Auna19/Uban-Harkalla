@@ -67,6 +67,15 @@ async function seedAdmin() {
       active: true,
     },
     {
+      id: '00000000-0000-0000-0000-000000000006',
+      name: 'Store Inventory Manager',
+      email: 'inventory@ubanharkalla.com',
+      phone: '08022223344',
+      pass: 'admin123',
+      role: 'admin',
+      active: true,
+    },
+    {
       id: '00000000-0000-0000-0000-000000000005',
       name: 'Suspended Account',
       email: 'suspended@test.ng',

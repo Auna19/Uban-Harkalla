@@ -20,6 +20,16 @@ const SEED_USERS = [
     created_at: '2026-01-01T00:00:00Z',
   },
   {
+    id: 'user-admin-02',
+    email: 'inventory@ubanharkalla.com',
+    password: 'admin123',
+    full_name: 'Store Inventory Manager',
+    phone_number: '08022223344',
+    role: 'admin',
+    is_active: true,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  {
     id: 'user-customer-01',
     email: 'customer@ubanharkalla.com',
     password: 'customer123',
