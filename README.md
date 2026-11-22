@@ -11,7 +11,7 @@ UBAN HARKALLA delivers a seamless, high-trust digital shopping experience for sm
 ### Key Highlights
 - **100% Functional Full-Stack Experience:** Live shopping cart, dynamic variation matrix (Storage, Color, Condition, RAM), real-time stock tracking, Nigerian state delivery fee calculations, and administrative order fulfillment.
 - **Authentic Brand Integration:** Built around the official UBAN HARKALLA visual identity, including the official logo (`Logo.jpg`), official CEO photograph (`About CEO Image.jpg`), store inventory photography, and the official brand audio welcome experience (`UBAN HARKALLA MP3.mp3`).
-- **Neon Serverless PostgreSQL Database:** Powered by Neon Serverless PostgreSQL (`@neondatabase/serverless`) via HTTPS with the complete database schema (`neon/schema.sql`), atomic order operations, audit logging, and resilient local-first fallback capabilities for instant offline testing.
+- **Supabase PostgreSQL Database:** Powered by Supabase PostgreSQL (`@supabase/supabase-js`, `@supabase/ssr`) with complete database schema (`supabase/schema.sql`), atomic order operations, audit logging, and resilient local-first fallback capabilities for instant offline testing.
 - **Modern Scroll Transitions & Dynamic Visuals:** Hardware-accelerated intersection observer reveal animations (`ScrollReveal.jsx`), interactive 3D perspective cards (`TiltCard.jsx`), automated flagship device carousel slider, and portal-based variation modal (`QuickViewModal.jsx`).
 - **Nigerian Delivery Logistics:** Dynamic delivery calculation engine with Kano Free Delivery (₦0), Niger (₦3,000), Abuja (₦2,500), Katsina (₦1,500), Kaduna (₦2,000), and Physical Flagship Store Pickup (₦0).
 - **Payment Gateway Flexibility:** Support for Paystack (cards, USSD, transfers), direct Nigerian bank transfers (Jaiz / Zenith Bank), and Pay on Delivery.
@@ -47,10 +47,9 @@ npm install
 ### 3. Environment Configuration
 Create or update your `.env` file in the project root:
 ```env
-# Neon Serverless PostgreSQL Database Connection
-# Format: postgresql://[user]:[password]@[ep-xyz].us-east-2.aws.neon.tech/neondb?sslmode=require
-# (Leave empty to use built-in standalone storage mode)
-VITE_NEON_DATABASE_URL=
+# Supabase PostgreSQL Configuration
+VITE_SUPABASE_URL=https://rewguroxxexcboxoywdt.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_JI9lDRqrKsWKNcWAgj7c0g__GMXVhep
 
 # Paystack Test Public Key (Replace with your actual public key)
 VITE_PAYSTACK_PUBLIC_KEY=pk_test_sample_uban_harkalla_key
@@ -89,9 +88,9 @@ The platform provides secure, role-based access for customers and administrative
 
 ---
 
-## 🗄️ Neon PostgreSQL Setup & Deployment
+## 🗄️ Supabase PostgreSQL Setup & Deployment
 
-The complete production SQL migration is provided at `neon/schema.sql`.
+The complete production SQL migration is provided at `supabase/schema.sql`.
 
 ### Tables Included
 1. `users` (User profiles, password hashes, and role assignments: `customer`, `admin`, `super_admin`)

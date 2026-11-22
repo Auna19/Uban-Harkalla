@@ -2,7 +2,7 @@
   "name": "uban-harkalla",
   "private": true,
   "version": "1.0.0",
-  "description": "Premium e-commerce platform for smartphones, gadgets, and accessories powered by React, Tailwind CSS, and Neon Serverless PostgreSQL.",
+  "description": "Premium e-commerce platform for smartphones, gadgets, and accessories powered by React, Tailwind CSS, and Supabase PostgreSQL.",
   "type": "module",
   "keywords": [
     "ecommerce",
@@ -10,7 +10,7 @@
     "gadgets",
     "react",
     "tailwind",
-    "neon-postgres",
+    "supabase-postgres",
     "nigeria"
   ],
   "author": "UBAN HARKALLA",
@@ -27,10 +27,9 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@neon/config": "^1.14.4",
-    "@neon/env": "^2.1.7",
-    "@neondatabase/serverless": "^1.2.1",
     "@rollup/wasm-node": "^4.68.7",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "lucide-react": "^0.475.0",

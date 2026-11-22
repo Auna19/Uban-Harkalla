@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { sql, isNeonConfigured } from '../services/neonClient';
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 import { useAudio } from './AudioContext';
 
 const AuthContext = createContext(null);
@@ -104,18 +104,35 @@ export function AuthProvider({ children }) {
     if (!phone || phone.length < 10) throw new Error('Valid Nigerian phone number is required.');
     if (!password || password.length < 6) throw new Error('Password must be at least 6 characters.');
 
-    if (isNeonConfigured && sql) {
+    if (isSupabaseConfigured && supabase) {
       try {
-        const existing = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()}`;
+        const { data: existing } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('email', email.trim())
+          .limit(1);
+
         if (existing && existing.length > 0) {
           throw new Error('An account with this email address already exists. Please login.');
         }
-        const createdUsers = await sql`
-          INSERT INTO users (full_name, email, phone_number, password_hash, role, is_active)
-          VALUES (${fullName}, ${email.toLowerCase()}, ${phone}, ${password}, 'customer', true)
-          RETURNING id, full_name, email, phone_number, role, is_active, created_at
-        `;
-        if (createdUsers && createdUsers.length > 0) {
+
+        const { data: createdUsers, error: insertErr } = await supabase
+          .from('users')
+          .insert([
+            {
+              full_name: fullName.trim(),
+              email: email.toLowerCase().trim(),
+              phone_number: phone.trim(),
+              password_hash: password,
+              role: 'customer',
+              is_active: true,
+            },
+          ])
+          .select('id, full_name, email, phone_number, role, is_active, created_at');
+
+        if (insertErr) {
+          console.warn('Supabase signup insert warning:', insertErr);
+        } else if (createdUsers && createdUsers.length > 0) {
           const created = createdUsers[0];
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(created));
           setUser(created);
@@ -154,7 +171,7 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         if (err.message?.includes('already exists')) throw err;
-        console.warn('Neon signup warning, using local mode:', err);
+        console.warn('Supabase signup warning, using local mode:', err);
       }
     }
 
@@ -220,14 +237,16 @@ export function AuthProvider({ children }) {
     const cleanEmail = email?.trim().toLowerCase();
     if (!cleanEmail || !password) throw new Error('Please enter both email and password.');
 
-    if (isNeonConfigured && sql) {
+    if (isSupabaseConfigured && supabase) {
       try {
-        const rows = await sql`
-          SELECT id, full_name, email, phone_number, role, COALESCE(is_active, true) as is_active, created_at
-          FROM users
-          WHERE LOWER(TRIM(email)) = ${cleanEmail} AND password_hash = ${password}
-        `;
-        if (rows && rows.length > 0) {
+        const { data: rows, error } = await supabase
+          .from('users')
+          .select('id, full_name, email, phone_number, role, is_active, created_at')
+          .ilike('email', cleanEmail)
+          .eq('password_hash', password)
+          .limit(1);
+
+        if (!error && rows && rows.length > 0) {
           const userFound = rows[0];
           if (userFound.is_active === false) {
             throw new Error('Your customer account has been suspended. Please contact customer support.');
@@ -240,7 +259,7 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         if (err.message?.includes('suspended')) throw err;
-        console.warn('Neon login warning, using local mode:', err);
+        console.warn('Supabase login warning, using local mode:', err);
       }
     }
 
@@ -290,15 +309,18 @@ export function AuthProvider({ children }) {
     setProfile(updated);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updated));
 
-    if (isNeonConfigured && sql) {
+    if (isSupabaseConfigured && supabase) {
       try {
-        await sql`
-          UPDATE users
-          SET full_name = ${updated.full_name || ''}, phone_number = ${updated.phone_number || ''}, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ${user.id}
-        `;
+        await supabase
+          .from('users')
+          .update({
+            full_name: updated.full_name || '',
+            phone_number: updated.phone_number || '',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id);
       } catch (err) {
-        console.warn('Neon update profile warning:', err);
+        console.warn('Supabase update profile warning:', err);
       }
     } else {
       const registered = JSON.parse(localStorage.getItem(USERS_DB_KEY) || JSON.stringify(SEED_USERS));
