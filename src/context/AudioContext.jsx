@@ -19,6 +19,7 @@ export function AudioProvider({ children }) {
     const audio = new Audio('/UBAN HARKALLA MP3.mp3');
     audio.loop = false; // Strictly non-looping as required
     audio.volume = volume;
+    audio.preload = 'auto'; // Preload for instant, zero-latency mobile playback
     audioRef.current = audio;
 
     const handlePlay = () => setIsPlaying(true);
@@ -62,14 +63,64 @@ export function AudioProvider({ children }) {
       }
     } catch (err) {
       if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
-        console.info('Browser autoplay policy prevented audio. Showing manual control.');
-        setAutoplayBlocked(true);
+        console.info('Autoplay waiting for first touch gesture on mobile.');
       } else {
         console.warn('Playback notice:', err.message);
       }
       setIsPlaying(false);
     }
   }, []);
+
+  // One-time interaction listener for seamless mobile playback on first touch/interaction
+  useEffect(() => {
+    let triggered = false;
+
+    const handleFirstGesture = async () => {
+      if (triggered) return;
+      if (!audioRef.current) return;
+
+      // If already playing or landing audio already played, clean up listeners
+      if (isPlaying || landingPlayedRef.current) {
+        removeGestureListeners();
+        return;
+      }
+
+      try {
+        if (audioRef.current.ended) {
+          audioRef.current.currentTime = 0;
+        }
+        const promise = audioRef.current.play();
+        if (promise !== undefined) {
+          await promise;
+          triggered = true;
+          landingPlayedRef.current = true;
+          setAutoplayBlocked(false);
+          setIsPlaying(true);
+          removeGestureListeners();
+        }
+      } catch (err) {
+        // If still restricted, keep listeners attached for subsequent touch
+      }
+    };
+
+    const removeGestureListeners = () => {
+      const events = ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'];
+      events.forEach((evt) => {
+        window.removeEventListener(evt, handleFirstGesture, { capture: true });
+        document.removeEventListener(evt, handleFirstGesture, { capture: true });
+      });
+    };
+
+    const events = ['touchstart', 'touchend', 'pointerdown', 'click', 'keydown'];
+    events.forEach((evt) => {
+      window.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
+      document.addEventListener(evt, handleFirstGesture, { capture: true, passive: true });
+    });
+
+    return () => {
+      removeGestureListeners();
+    };
+  }, [isPlaying]);
 
   const pause = useCallback(() => {
     if (audioRef.current) {
