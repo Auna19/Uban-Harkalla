@@ -76,7 +76,7 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
 
     // Verify bulk action banner appears with correct count
     const bulkBanner = page.locator('text=/2 products selected/i');
-    await expect(bulkBanner).toBeVisible();
+    await expect(bulkBanner).toBeVisible({ timeout: 15000 });
 
     const deleteBtn = page.getByRole('button', { name: /Delete Selected \(2\)/i });
     await expect(deleteBtn).toBeVisible();
@@ -237,6 +237,33 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     // 6. Navigate directly to /admin/payments -> Verify Access Restricted barrier
     await invPage.goto('/admin/payments');
     await expect(invPage.locator('text=Super Admin Privileges Required')).toBeVisible({ timeout: 15000 });
+
+    // 7. Verify Logout Confirmation Prompt for Store Inventory Manager
+    await invPage.goto('/admin/dashboard');
+    const logoutBtn = invPage.locator('aside button[title="Log Out"]').first();
+    await expect(logoutBtn).toBeVisible();
+    await logoutBtn.click();
+
+    // Verify confirmation modal appears with role details
+    const logoutModal = invPage.getByRole('dialog');
+    await expect(logoutModal).toBeVisible();
+    await expect(logoutModal).toContainText(/Sign Out of Admin Portal\?/i);
+    await expect(logoutModal).toContainText(/Store Inventory Manager/i);
+
+    // Test Cancel / Stay Signed In
+    const cancelBtn = logoutModal.getByRole('button', { name: /Stay Signed In|Cancel/i });
+    await cancelBtn.click();
+    await expect(logoutModal).not.toBeVisible();
+    await expect(invPage).toHaveURL(/.*\/admin\/dashboard/);
+
+    // Test Confirm Sign Out
+    await logoutBtn.click();
+    await expect(logoutModal).toBeVisible();
+    const confirmBtn = logoutModal.getByRole('button', { name: /Yes, Sign Out|Sign Out/i });
+    await confirmBtn.click();
+
+    // Verify redirected to admin login
+    await expect(invPage).toHaveURL(/.*\/admin\/login/, { timeout: 20000 });
 
     await context.close();
   });

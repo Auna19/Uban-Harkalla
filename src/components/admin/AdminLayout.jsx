@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmationModal from '../common/ConfirmationModal';
 import {
   LayoutDashboard,
   Smartphone,
@@ -26,6 +27,7 @@ export default function AdminLayout() {
   const { profile, user, logout, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Dynamic Navigation Items with Strict Role-Based Visibility (RBAC)
   const allNavItems = [
@@ -47,7 +49,8 @@ export default function AdminLayout() {
   // Store Inventory Manager only sees inventory, catalog, and order fulfillment modules
   const navItems = allNavItems.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
-  const handleLogout = () => {
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
     logout();
     navigate('/admin/login');
   };
@@ -114,7 +117,7 @@ export default function AdminLayout() {
               </div>
             </div>
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-900 cursor-pointer shrink-0"
               title="Log Out"
             >
@@ -225,8 +228,11 @@ export default function AdminLayout() {
 
             <div className="pt-4 border-t border-slate-800">
               <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-400 hover:bg-slate-900 rounded-xl"
+                onClick={() => {
+                  setMobileSidebarOpen(false);
+                  setShowLogoutModal(true);
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-400 hover:bg-slate-900 rounded-xl cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Log Out</span>
@@ -235,6 +241,19 @@ export default function AdminLayout() {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Prompt Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+        title="Sign Out of Admin Portal?"
+        message={`Are you sure you want to end your active administrative session as ${roleDisplayName}? You will need to re-authenticate with your email and password to access store management controls.`}
+        confirmText="Yes, Sign Out"
+        cancelText="Stay Signed In"
+        confirmVariant="danger"
+        itemName={profile?.email || user?.email || roleDisplayName}
+      />
 
     </div>
   );
