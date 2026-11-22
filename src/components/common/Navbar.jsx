@@ -3,14 +3,22 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Menu, X, User, LogOut, ShieldCheck, Search, ChevronDown, Package, Home, Store } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import ConfirmationModal from './ConfirmationModal';
 
 export default function Navbar() {
   const { user, profile, isAdmin, logout } = useAuth();
   const { itemCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+    navigate('/');
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -183,12 +191,12 @@ export default function Navbar() {
 
                     <div className="border-t border-slate-100 mt-1 pt-1">
                       <button
+                        type="button"
                         onClick={() => {
                           setUserDropdownOpen(false);
-                          logout();
-                          navigate('/');
+                          setShowLogoutModal(true);
                         }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                       >
                         <LogOut className="w-4 h-4" />
                         Log Out
@@ -265,7 +273,21 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {!user && (
+          {user ? (
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setShowLogoutModal(true);
+                }}
+                className="w-full text-center py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
+              </button>
+            </div>
+          ) : (
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
               <Link
                 to="/login"
@@ -342,6 +364,20 @@ export default function Navbar() {
           <span>{user ? 'Account' : 'Login'}</span>
         </NavLink>
       </nav>
+
+      {/* Logout Confirmation Prompt Modal for Customer / Navbar */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+        icon={LogOut}
+        title="Are you sure you want to logout?"
+        message="Are you sure you want to log out of your account? You will need to sign back in with your email and password to access your dashboard and order tracking."
+        confirmText="Yes, Log Out"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        itemName={profile?.email || user?.email}
+      />
     </header>
   );
 }

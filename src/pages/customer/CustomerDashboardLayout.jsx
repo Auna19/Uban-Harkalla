@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 import {
   LayoutDashboard,
   Package,
@@ -15,6 +16,7 @@ import {
 export default function CustomerDashboardLayout() {
   const { profile, user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const menu = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard, end: true },
@@ -24,7 +26,8 @@ export default function CustomerDashboardLayout() {
     { label: 'Delivery Addresses', path: '/dashboard/addresses', icon: MapPin },
   ];
 
-  const handleLogout = () => {
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
     logout();
     navigate('/');
   };
@@ -92,8 +95,9 @@ export default function CustomerDashboardLayout() {
 
             <div className="pt-3 border-t border-slate-100 mt-2">
               <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
+                type="button"
+                onClick={() => setShowLogoutModal(true)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-50 rounded-2xl transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Log Out</span>
@@ -109,6 +113,20 @@ export default function CustomerDashboardLayout() {
         </div>
 
       </div>
+
+      {/* Logout Confirmation Prompt Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+        icon={LogOut}
+        title="Are you sure you want to logout?"
+        message="Are you sure you want to log out of your account? You will need to sign back in with your email and password to access your dashboard and order tracking."
+        confirmText="Yes, Log Out"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        itemName={profile?.email || user?.email}
+      />
     </div>
   );
 }
