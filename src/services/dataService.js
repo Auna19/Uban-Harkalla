@@ -479,13 +479,25 @@ export async function saveProduct(product) {
 
   // Ensure variations inherit proper numeric prices, primary image unless explicitly customized,
   // and inherit product-level discount when no specific variation discount was set
-  const normalizedVariations = (product.variations || []).map((v) => {
-    const vPrice = Number(v.price) || Number(product.base_price) || 0;
-    const vDiscount = (v.discounted_price && Number(v.discounted_price) > 0)
+  const normalizedVariations = (product.variations || []).map((v, idx) => {
+    let vPrice = Number(v.price) || 0;
+    if (idx === 0 && Number(product.base_price) > 0) {
+      vPrice = Number(product.base_price);
+    } else if (!vPrice && Number(product.base_price) > 0) {
+      vPrice = Number(product.base_price);
+    }
+
+    const prodDiscount = (product.discounted_price && Number(product.discounted_price) > 0 && Number(product.discounted_price) < vPrice)
+      ? Number(product.discounted_price)
+      : null;
+
+    let vDiscount = (v.discounted_price && Number(v.discounted_price) > 0 && Number(v.discounted_price) < vPrice)
       ? Number(v.discounted_price)
-      : (product.discounted_price && Number(product.discounted_price) > 0 && Number(product.discounted_price) < vPrice)
-        ? Number(product.discounted_price)
-        : null;
+      : null;
+
+    if (idx === 0 && product.discounted_price !== undefined) {
+      vDiscount = prodDiscount;
+    }
 
     let img = normalizedPrimaryImage;
     if (v.has_custom_image && v.image_url) {

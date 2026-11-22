@@ -138,21 +138,36 @@ export default function ProductDetailPage() {
     }
   }, [matchedVariation, product]);
 
-  // Calculate pricing & stock based on matched variation
-  const originalPrice = Number(
-    (matchedVariation && matchedVariation.price) ||
-    product?.base_price ||
-    0
-  );
+  // Calculate pricing & stock based on matched variation and authoritative product base pricing
+  const isBaseOrFirstVar = !matchedVariation || (product?.variations && product.variations[0]?.id === matchedVariation.id);
+  const basePriceNum = Number(product?.base_price) || 0;
 
-  const varDiscount = matchedVariation?.discounted_price ? Number(matchedVariation.discounted_price) : null;
-  const prodDiscount = product?.discounted_price ? Number(product.discounted_price) : null;
+  const originalPrice = (isBaseOrFirstVar && basePriceNum > 0)
+    ? basePriceNum
+    : Number(matchedVariation?.price || basePriceNum || 0);
 
-  const effectiveDiscount = (varDiscount && varDiscount > 0 && varDiscount < originalPrice)
-    ? varDiscount
-    : (prodDiscount && prodDiscount > 0 && prodDiscount < originalPrice)
-      ? prodDiscount
-      : null;
+  const hasExplicitDiscount = product?.discounted_price !== undefined &&
+    product?.discounted_price !== null &&
+    product?.discounted_price !== '' &&
+    Number(product.discounted_price) > 0;
+
+  let effectiveDiscount = null;
+  if (isBaseOrFirstVar && hasExplicitDiscount) {
+    const pDisc = Number(product.discounted_price);
+    if (pDisc < originalPrice) {
+      effectiveDiscount = pDisc;
+    }
+  } else if (matchedVariation?.discounted_price && Number(matchedVariation.discounted_price) > 0) {
+    const vDisc = Number(matchedVariation.discounted_price);
+    if (vDisc < originalPrice) {
+      effectiveDiscount = vDisc;
+    }
+  } else if (hasExplicitDiscount) {
+    const pDisc = Number(product?.discounted_price);
+    if (pDisc < originalPrice) {
+      effectiveDiscount = pDisc;
+    }
+  }
 
   const currentPrice = effectiveDiscount !== null ? effectiveDiscount : originalPrice;
   const hasDiscount = effectiveDiscount !== null && originalPrice > currentPrice;

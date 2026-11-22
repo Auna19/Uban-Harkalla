@@ -357,14 +357,26 @@ export default function AdminProductsPage() {
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-black text-emerald-400">
-                          {formatPrice(prod.discounted_price || prod.base_price)}
-                        </div>
-                        {prod.discounted_price && (
-                          <div className="text-[10px] text-slate-500 line-through">
-                            {formatPrice(prod.base_price)}
-                          </div>
-                        )}
+                        {(() => {
+                          const base = Number(prod.base_price) || 0;
+                          const disc = prod.discounted_price !== null && prod.discounted_price !== undefined && prod.discounted_price !== '' && Number(prod.discounted_price) > 0
+                            ? Number(prod.discounted_price)
+                            : null;
+                          const hasDiscount = disc !== null && disc < base;
+                          const current = hasDiscount ? disc : base;
+                          return (
+                            <div>
+                              <div className="font-black text-emerald-400">
+                                {formatPrice(current)}
+                              </div>
+                              {hasDiscount && (
+                                <div className="text-[10px] text-slate-500 line-through">
+                                  {formatPrice(base)}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       <td className="py-3.5 px-4 whitespace-nowrap">

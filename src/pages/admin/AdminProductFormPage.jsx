@@ -46,7 +46,9 @@ export default function AdminProductFormPage() {
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState(0);
+  const [prevBasePrice, setPrevBasePrice] = useState(0);
   const [discountedPrice, setDiscountedPrice] = useState(0);
+  const [prevDiscountedPrice, setPrevDiscountedPrice] = useState(0);
   const [stockQuantity, setStockQuantity] = useState(10);
   const [isFeatured, setIsFeatured] = useState(!isEditing);
   const [isActive, setIsActive] = useState(true);
@@ -82,7 +84,9 @@ export default function AdminProductFormPage() {
           setShortDescription(prod.short_description || '');
           setDescription(prod.description || '');
           setBasePrice(prod.base_price || 0);
+          setPrevBasePrice(prod.base_price || 0);
           setDiscountedPrice(prod.discounted_price || 0);
+          setPrevDiscountedPrice(prod.discounted_price || 0);
           setStockQuantity(prod.stock_quantity || 0);
           setIsFeatured(prod.is_featured || false);
           setIsActive(prod.is_active !== false);
@@ -258,8 +262,29 @@ export default function AdminProductFormPage() {
     showToast(`Variation #${idx + 1} reset to primary product photo!`, 'info');
   };
 
+  const handleSyncPricingToVariations = () => {
+    const bPrice = Number(basePrice) || 0;
+    const dPrice = Number(discountedPrice) || 0;
+    setVariations((prev) =>
+      prev.map((v) => ({
+        ...v,
+        price: bPrice,
+        discounted_price: dPrice > 0 && dPrice < bPrice ? dPrice : 0,
+      }))
+    );
+    showToast(`Base price (${formatPrice(bPrice)}) & discount applied to all variations!`, 'success');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const numBase = Number(basePrice) || 0;
+    const numDiscount = Number(discountedPrice) || 0;
+
+    if (numDiscount > 0 && numDiscount >= numBase) {
+      showToast('Discounted price must be less than the base price.', 'error');
+      return;
+    }
 
     const selectedCategoryObj = categories.find((c) => c.id === categoryId);
     const selectedBrandObj = brands.find((b) => b.id === brandId);
@@ -272,18 +297,28 @@ export default function AdminProductFormPage() {
     const cleanSlug = (slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || `prod-${Date.now()}`;
     const primaryImage = imageUrls[0] || '/1001102628.jpg';
 
-    const normalizedVariations = variations.map((v) => {
-      const vPrice = Number(v.price) || Number(basePrice) || 0;
-      const vDiscount = (v.discounted_price && Number(v.discounted_price) > 0)
-        ? Number(v.discounted_price)
-        : (discountedPrice && Number(discountedPrice) > 0 && Number(discountedPrice) < vPrice)
-          ? Number(discountedPrice)
-          : null;
+    const normalizedVariations = variations.map((v, idx) => {
+      let vPrice = Number(v.price) || 0;
+      // If variation price was empty, or equal to previous base price, or default variation:
+      if (!vPrice || vPrice === Number(prevBasePrice) || idx === 0) {
+        vPrice = numBase || vPrice;
+      }
+
+      let vDiscount = Number(v.discounted_price) || 0;
+      if (numDiscount > 0 && numDiscount < vPrice) {
+        if (!vDiscount || vDiscount === Number(prevDiscountedPrice) || idx === 0) {
+          vDiscount = numDiscount;
+        }
+      } else if (!numDiscount || numDiscount <= 0) {
+        if (vDiscount === Number(prevDiscountedPrice) || idx === 0) {
+          vDiscount = null;
+        }
+      }
 
       return {
         ...v,
         price: vPrice,
-        discounted_price: vDiscount,
+        discounted_price: vDiscount && vDiscount > 0 && vDiscount < vPrice ? vDiscount : null,
         stock_quantity: Number(v.stock_quantity || 0),
         has_custom_image: Boolean(v.has_custom_image),
         image_url: v.has_custom_image ? v.image_url : primaryImage,
@@ -301,8 +336,8 @@ export default function AdminProductFormPage() {
       os,
       short_description: shortDescription,
       description,
-      base_price: Number(basePrice),
-      discounted_price: discountedPrice ? Number(discountedPrice) : null,
+      base_price: numBase,
+      discounted_price: numDiscount > 0 && numDiscount < numBase ? numDiscount : null,
       stock_quantity: calculatedTotalStock,
       is_featured: isFeatured,
       is_active: isActive,
@@ -496,6 +531,21 @@ export default function AdminProductFormPage() {
               )}
             </div>
           </div>
+
+          {variations.length > 0 && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <span className="text-xs text-slate-400">
+                Have variations with different pricing? You can sync them now:
+              </span>
+              <button
+                type="button"
+                onClick={handleSyncPricingToVariations}
+                className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 font-bold text-xs rounded-lg transition-colors cursor-pointer"
+              >
+                Apply base price & discount to all ({variations.length}) variations
+              </button>
+            </div>
+          )}
 
           {/* Product Media Gallery Uploader */}
           <div className="space-y-3 pt-2 border-t border-slate-800/80">

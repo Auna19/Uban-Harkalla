@@ -17,22 +17,29 @@ export default function ProductCard({ product }) {
   const defaultVariation =
     product.variations && product.variations.length > 0 ? product.variations[0] : null;
 
-  // 1. Determine numeric base / original price
-  const originalPrice = Number(
-    (defaultVariation && defaultVariation.price) ||
-    product.base_price ||
-    0
-  );
+  // 1. Authoritative base / original price: Prioritize product.base_price if set, fallback to variation
+  const originalPrice = Number(product.base_price) > 0
+    ? Number(product.base_price)
+    : Number(defaultVariation?.price || 0);
 
-  // 2. Determine numeric discounted price (variation-specific first, fallback to product-level)
-  const varDiscount = defaultVariation?.discounted_price ? Number(defaultVariation.discounted_price) : null;
-  const prodDiscount = product.discounted_price ? Number(product.discounted_price) : null;
+  // 2. Authoritative discounted price: If product has a discounted_price set, use it. Otherwise fallback to variation discount
+  const hasExplicitDiscount = product.discounted_price !== undefined &&
+    product.discounted_price !== null &&
+    product.discounted_price !== '' &&
+    Number(product.discounted_price) > 0;
 
-  const effectiveDiscount = (varDiscount && varDiscount > 0 && varDiscount < originalPrice)
-    ? varDiscount
-    : (prodDiscount && prodDiscount > 0 && prodDiscount < originalPrice)
-      ? prodDiscount
-      : null;
+  let effectiveDiscount = null;
+  if (hasExplicitDiscount) {
+    const pDisc = Number(product.discounted_price);
+    if (pDisc < originalPrice) {
+      effectiveDiscount = pDisc;
+    }
+  } else if (!product.base_price && defaultVariation?.discounted_price) {
+    const vDisc = Number(defaultVariation.discounted_price);
+    if (vDisc > 0 && vDisc < originalPrice) {
+      effectiveDiscount = vDisc;
+    }
+  }
 
   const currentPrice = effectiveDiscount !== null ? effectiveDiscount : originalPrice;
   const hasDiscount = effectiveDiscount !== null && originalPrice > currentPrice;

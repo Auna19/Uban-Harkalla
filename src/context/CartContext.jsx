@@ -37,15 +37,28 @@ export function CartProvider({ children }) {
    * Add item to cart with selected variation
    */
   const addToCart = useCallback((product, variation, quantity = 1) => {
-    const varPrice = variation?.price ? Number(variation.price) : (Number(product.base_price) || 0);
-    const varDiscount = variation?.discounted_price ? Number(variation.discounted_price) : null;
-    const prodDiscount = product.discounted_price ? Number(product.discounted_price) : null;
+    const isBaseOrFirstVar = !variation || (product.variations && product.variations[0]?.id === variation.id);
+    const basePriceNum = Number(product.base_price) || 0;
+
+    const varPrice = (isBaseOrFirstVar && basePriceNum > 0)
+      ? basePriceNum
+      : (variation?.price ? Number(variation.price) : basePriceNum);
+
+    const hasExplicitDiscount = product.discounted_price !== undefined &&
+      product.discounted_price !== null &&
+      product.discounted_price !== '' &&
+      Number(product.discounted_price) > 0;
 
     let unitPrice = varPrice;
-    if (varDiscount && varDiscount > 0 && varDiscount < varPrice) {
-      unitPrice = varDiscount;
-    } else if (prodDiscount && prodDiscount > 0 && prodDiscount < varPrice) {
-      unitPrice = prodDiscount;
+    if (isBaseOrFirstVar && hasExplicitDiscount) {
+      const pDisc = Number(product.discounted_price);
+      if (pDisc < varPrice) unitPrice = pDisc;
+    } else if (variation?.discounted_price && Number(variation.discounted_price) > 0) {
+      const vDisc = Number(variation.discounted_price);
+      if (vDisc < varPrice) unitPrice = vDisc;
+    } else if (hasExplicitDiscount) {
+      const pDisc = Number(product.discounted_price);
+      if (pDisc < varPrice) unitPrice = pDisc;
     }
 
     const availableStock = variation ? variation.stock_quantity : product.stock_quantity;

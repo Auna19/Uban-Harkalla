@@ -169,4 +169,122 @@ test.describe.serial('Module 7: Admin to Storefront Cross-Browser Data & Image S
     await adminContext.close();
     await clientContext.close();
   });
+
+  test('TC-SYNC-004: Admin updates Base Price and Promo Discounted Price -> Accurately reflected on Admin, Landing Page, Shop, and Product Details', async ({ browser }) => {
+    test.setTimeout(120000);
+
+    // 1. Admin Updates Base Price & Discounted Price
+    const adminContext = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+
+    await adminPage.goto('/admin/login');
+    await adminPage.locator('input[type="email"]').fill('admin@ubanharkalla.com');
+    await adminPage.locator('input[type="password"]').fill('admin123');
+    await adminPage.getByRole('button', { name: /Access Dashboard|Login/i }).click();
+    await expect(adminPage).toHaveURL(/.*\/admin\/dashboard/, { timeout: 30000 });
+
+    await adminPage.goto('/admin/products');
+    const row = adminPage.locator('tbody tr', { hasText: testProductName }).first();
+    await expect(row).toBeVisible({ timeout: 25000 });
+    await row.locator('a[title*="Edit Product"]').click();
+
+    await expect(adminPage.locator('h1')).toContainText(/Edit Product/i, { timeout: 30000 });
+
+    // Update Base Price to 950,000 and Discounted Price to 890,000
+    const basePriceInput = adminPage.locator('input[type="number"]').first();
+    await basePriceInput.fill('950000');
+    const discountPriceInput = adminPage.locator('input[placeholder*="promo price"]');
+    await discountPriceInput.fill('890000');
+
+    // Click Apply base price & discount to all variations if variations button is visible
+    const syncVarBtn = adminPage.getByRole('button', { name: /Apply base price & discount/i });
+    if (await syncVarBtn.isVisible()) {
+      await syncVarBtn.click();
+    }
+
+    // Save changes
+    const saveBtn = adminPage.locator('button[type="submit"]');
+    await saveBtn.click();
+    await expect(adminPage).toHaveURL(/.*\/admin\/products\/?$/, { timeout: 35000 });
+
+    // Verify on Admin Products table: shows ₦890,000 in green and ₦950,000 strikethrough
+    const updatedRow = adminPage.locator('tbody tr', { hasText: testProductName }).first();
+    await expect(updatedRow).toBeVisible({ timeout: 25000 });
+    await expect(updatedRow).toContainText('₦890,000');
+    await expect(updatedRow).toContainText('₦950,000');
+
+    // 2. Client Browser Context (Clean session)
+    const clientContext = await browser.newContext();
+    const clientPage = await clientContext.newPage();
+
+    // Check Landing Page Product Card
+    await clientPage.goto('/');
+    const landingProductCard = clientPage.locator('.group', { hasText: testProductName }).first();
+    await landingProductCard.scrollIntoViewIfNeeded();
+    await expect(landingProductCard).toBeVisible({ timeout: 35000 });
+    await expect(landingProductCard).toContainText('₦890,000');
+    await expect(landingProductCard).toContainText('₦950,000');
+    await expect(landingProductCard).toContainText('Save ₦60,000');
+
+    // Check Product Details Page
+    await clientPage.goto(`/product/${testProductSlug}`);
+    await expect(clientPage.locator('h1').first()).toContainText(testProductName, { timeout: 30000 });
+    await expect(clientPage.locator('body')).toContainText('₦890,000');
+    await expect(clientPage.locator('body')).toContainText('₦950,000');
+
+    // Check Shop Page
+    await clientPage.goto('/shop');
+    await expect(clientPage.getByTestId('shop-loading-skeleton')).toHaveCount(0, { timeout: 35000 });
+    const shopSearch = clientPage.locator('input[placeholder*="Search by name"]').first();
+    await expect(shopSearch).toBeVisible({ timeout: 20000 });
+    await shopSearch.fill(testProductName);
+    await clientPage.waitForTimeout(600);
+    const shopCard = clientPage.locator('.group', { hasText: testProductName }).first();
+    await expect(shopCard).toBeVisible({ timeout: 25000 });
+    await expect(shopCard).toContainText('₦890,000');
+    await expect(shopCard).toContainText('₦950,000');
+
+    await adminContext.close();
+    await clientContext.close();
+  });
+
+  test('TC-SYNC-005: Clean up all created test data (Delete test product from Admin) -> Verified removed', async ({ browser }) => {
+    test.setTimeout(120000);
+
+    const adminContext = await browser.newContext();
+    const adminPage = await adminContext.newPage();
+
+    await adminPage.goto('/admin/login');
+    await adminPage.locator('input[type="email"]').fill('admin@ubanharkalla.com');
+    await adminPage.locator('input[type="password"]').fill('admin123');
+    await adminPage.getByRole('button', { name: /Access Dashboard|Login/i }).click();
+    await expect(adminPage).toHaveURL(/.*\/admin\/dashboard/, { timeout: 30000 });
+
+    await adminPage.goto('/admin/products');
+    const row = adminPage.locator('tbody tr', { hasText: testProductName }).first();
+    if (await row.isVisible()) {
+      // Click delete button on the row
+      const deleteBtn = row.locator('button[title*="Delete Product"]');
+      await deleteBtn.click();
+
+      // Confirm in modal
+      const modal = adminPage.getByRole('dialog');
+      await expect(modal).toBeVisible({ timeout: 10000 });
+      const confirmDeleteBtn = modal.getByRole('button', { name: /Delete Product|Confirm|Yes/i });
+      await confirmDeleteBtn.click();
+      await expect(modal).not.toBeVisible({ timeout: 15000 });
+    }
+
+    // Verify row is no longer in admin table
+    await expect(adminPage.locator('tbody')).not.toContainText(testProductName, { timeout: 20000 });
+
+    // Verify removed from landing page
+    const clientContext = await browser.newContext();
+    const clientPage = await clientContext.newPage();
+    await clientPage.goto('/');
+    await expect(clientPage.locator('body')).not.toContainText(testProductName, { timeout: 20000 });
+
+    await adminContext.close();
+    await clientContext.close();
+  });
 });
