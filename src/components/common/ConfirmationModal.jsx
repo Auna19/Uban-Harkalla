@@ -13,6 +13,7 @@ export default function ConfirmationModal({
   confirmVariant = 'danger', // 'danger' | 'warning'
   itemName = '',
   loading = false,
+  icon: IconProp = null,
 }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -73,7 +74,9 @@ export default function ConfirmationModal({
                 : 'bg-amber-50 text-amber-600 border border-amber-100'
             }`}
           >
-            {isDanger ? (
+            {IconProp ? (
+              <IconProp className="w-6 h-6 stroke-[2.2]" />
+            ) : isDanger ? (
               <Trash2 className="w-6 h-6 stroke-[2.2]" />
             ) : (
               <AlertTriangle className="w-6 h-6 stroke-[2.2]" />
@@ -120,7 +123,13 @@ export default function ConfirmationModal({
               <span>Processing...</span>
             ) : (
               <>
-                <Trash2 className="w-4 h-4" />
+                {IconProp ? (
+                  <IconProp className="w-4 h-4" />
+                ) : isDanger ? (
+                  <Trash2 className="w-4 h-4" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4" />
+                )}
                 <span>{confirmText}</span>
               </>
             )}

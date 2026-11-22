@@ -117,13 +117,24 @@ export default function AdminLayout() {
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setShowLogoutModal(true)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-900 cursor-pointer shrink-0"
               title="Log Out"
+              aria-label="Log Out"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowLogoutModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-bold rounded-xl border border-red-500/20 hover:border-red-500/40 transition-all cursor-pointer shadow-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out</span>
+          </button>
 
           <Link
             to="/"
@@ -177,6 +188,16 @@ export default function AdminLayout() {
               <span className="text-xs font-semibold text-white hidden md:inline">
                 {profile?.full_name?.split(' ')[0] || 'Admin'}
               </span>
+
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-slate-800 hover:border-red-500/30 transition-all cursor-pointer ml-1"
+                title="Log Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Log Out</span>
+              </button>
             </div>
           </div>
         </header>
@@ -247,10 +268,11 @@ export default function AdminLayout() {
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={handleConfirmLogout}
-        title="Sign Out of Admin Portal?"
-        message={`Are you sure you want to end your active administrative session as ${roleDisplayName}? You will need to re-authenticate with your email and password to access store management controls.`}
-        confirmText="Yes, Sign Out"
-        cancelText="Stay Signed In"
+        icon={LogOut}
+        title="Are you sure you want to logout?"
+        message={`Are you sure you want to log out of your administrative session as ${roleDisplayName}? You will need to enter your email and password to access the admin portal again.`}
+        confirmText="Yes, Log Out"
+        cancelText="Cancel"
         confirmVariant="danger"
         itemName={profile?.email || user?.email || roleDisplayName}
       />

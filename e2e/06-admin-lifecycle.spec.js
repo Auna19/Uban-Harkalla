@@ -247,7 +247,7 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     // Verify confirmation modal appears with role details
     const logoutModal = invPage.getByRole('dialog');
     await expect(logoutModal).toBeVisible();
-    await expect(logoutModal).toContainText(/Sign Out of Admin Portal\?/i);
+    await expect(logoutModal).toContainText(/Are you sure you want to logout\?|Sign Out of Admin Portal\?/i);
     await expect(logoutModal).toContainText(/Store Inventory Manager/i);
 
     // Test Cancel / Stay Signed In
@@ -259,7 +259,7 @@ test.describe('Module 6: Admin Management & Fulfillment Lifecycle', () => {
     // Test Confirm Sign Out
     await logoutBtn.click();
     await expect(logoutModal).toBeVisible();
-    const confirmBtn = logoutModal.getByRole('button', { name: /Yes, Sign Out|Sign Out/i });
+    const confirmBtn = logoutModal.getByRole('button', { name: /Yes, Log Out|Yes, Sign Out|Sign Out/i });
     await confirmBtn.click();
 
     // Verify redirected to admin login
